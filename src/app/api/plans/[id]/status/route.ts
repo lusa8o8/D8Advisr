@@ -25,9 +25,12 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const normalizedStatus =
+    payload.data.status === "confirmed" ? "active" : payload.data.status;
+
   const { error } = await supabase
     .from("plans")
-    .update({ status: payload.data.status })
+    .update({ status: normalizedStatus })
     .eq("id", params.id)
     .eq("user_id", user.id);
 
