@@ -58,6 +58,7 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
       }
 
       toast.success("Success!");
+      router.refresh();
       router.push(redirectUrl);
     } finally {
       setLoading(false);

@@ -1,21 +1,30 @@
-import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import type { Database } from "@/types/database";
-import { requireEnvVar } from "@/lib/env";
+import { type NextRequest, NextResponse } from "next/server";
 
-const supabaseUrl = requireEnvVar(
-  "NEXT_PUBLIC_SUPABASE_URL",
-  process.env.NEXT_PUBLIC_SUPABASE_URL
-);
-const supabaseKey = requireEnvVar(
-  "SUPABASE_SERVICE_ROLE_KEY",
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
 
-export async function updateSession() {
-  const supabase = createServerClient<Database>(supabaseUrl, supabaseKey, {
-    cookies: cookies(),
-  });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
 
-  await supabase.auth.getSession();
+  await supabase.auth.getUser();
+  return supabaseResponse;
 }
