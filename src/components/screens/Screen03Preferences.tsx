@@ -24,10 +24,10 @@ const vibeOptions = [
 ];
 
 const groupOptions = [
-  { label: "Just Me", value: "just_me" },
-  { label: "Partner", value: "partner" },
-  { label: "Small Group (3-4)", value: "small_group" },
-  { label: "Big Group (5+)", value: "big_group" },
+  { label: "Just Me", value: 1 },
+  { label: "Partner", value: 2 },
+  { label: "Small Group (3-4)", value: 3 },
+  { label: "Big Group (5+)", value: 4 },
 ];
 
 type Screen03PreferencesProps = {
@@ -42,7 +42,7 @@ export default function Screen03Preferences({
   const router = useRouter();
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [budget, setBudget] = useState(150);
-  const [groupSize, setGroupSize] = useState(groupOptions[1].value);
+  const [groupSize, setGroupSize] = useState<number>(groupOptions[1].value);
   const [saving, setSaving] = useState(false);
 
   const toggleVibe = (label: string) => {
@@ -61,6 +61,8 @@ export default function Screen03Preferences({
       activity_preferences: selectedVibes,
       budget_preference: budget,
       group_size_preference: groupSize,
+      default_vibe: null,
+      last_updated: new Date().toISOString(),
     };
 
     const { error } = await supabaseBrowserClient

@@ -13,7 +13,7 @@ const supabaseServerKey = requireEnvVar(
 );
 
 export function createSupabaseServerClient() {
-  return createServerClient<Database>(supabaseUrl, supabaseServerKey, {
+  return createServerClient<Database, "public">(supabaseUrl, supabaseServerKey, {
     cookies: cookies(),
   });
 }
