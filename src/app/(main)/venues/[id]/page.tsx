@@ -1,10 +1,29 @@
-export default function VenueDetailPage() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
-      <h1 className="text-2xl font-semibold text-text-primary">Venue detail coming in Slice 6</h1>
-      <p className="text-sm text-text-secondary">
-        We'll surface venue profiles, photos, and reviews later in the experience.
-      </p>
-    </main>
-  );
+import { redirect } from "next/navigation";
+import Screen07VenueDetail from "@/components/screens/Screen07VenueDetail";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getVenueById } from "@/lib/services/venue-service";
+
+type VenuePageProps = {
+  params: {
+    id: string;
+  };
+};
+
+export default async function VenueDetailPage({ params }: VenuePageProps) {
+  const supabase = createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/");
+  }
+
+  const venue = await getVenueById(params.id);
+
+  if (!venue) {
+    redirect("/home");
+  }
+
+  return <Screen07VenueDetail venue={venue} />;
 }

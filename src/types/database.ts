@@ -66,6 +66,35 @@ export type GeneratedPlan = {
   stops: PlanStop[];
 };
 
+export type Plan = {
+  id: string;
+  user_id: string;
+  name: string;
+  occasion: string;
+  total_cost: number;
+  currency: string;
+  status: string;
+  city: string;
+  group_size: number | null;
+  plan_data: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PlanItem = {
+  id: string;
+  plan_id: string;
+  venue_id: string;
+  order_index: number;
+  activity: string;
+  duration_minutes: number;
+  estimated_cost: number;
+  arrival_time: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type RawVenue = {
   id: string;
   source: string;
@@ -141,6 +170,85 @@ export type ExperienceLogInsert = Omit<ExperienceLog, "id">;
 export type Database = {
   public: {
     Tables: {
+      plans: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          occasion: string;
+          total_cost: number;
+          currency: string;
+          status: string;
+          city: string;
+          group_size: number | null;
+          plan_data: Record<string, unknown> | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          name: string;
+          occasion: string;
+          total_cost: number;
+          currency: string;
+          status: string;
+          city: string;
+          group_size?: number | null;
+          plan_data?: Record<string, unknown> | null;
+        };
+        Update: Partial<{
+          id: string;
+          user_id: string;
+          name: string;
+          occasion: string;
+          total_cost: number;
+          currency: string;
+          status: string;
+          city: string;
+          group_size: number | null;
+          plan_data: Record<string, unknown> | null;
+          created_at: string;
+          updated_at: string;
+        }>;
+      };
+      plan_items: {
+        Row: {
+          id: string;
+          plan_id: string;
+          venue_id: string;
+          order_index: number;
+          activity: string;
+          duration_minutes: number;
+          estimated_cost: number;
+          arrival_time: string;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          plan_id: string;
+          venue_id: string;
+          order_index: number;
+          activity: string;
+          duration_minutes: number;
+          estimated_cost: number;
+          arrival_time: string;
+          notes?: string | null;
+        };
+        Update: Partial<{
+          id: string;
+          plan_id: string;
+          venue_id: string;
+          order_index: number;
+          activity: string;
+          duration_minutes: number;
+          estimated_cost: number;
+          arrival_time: string;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        }>;
+      };
       venues: {
         Row: Venue;
         Insert: VenueInsert;
