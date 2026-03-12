@@ -28,7 +28,7 @@ export default function Screen09PlanOverview({
       <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 py-6">
         <header>
           <p className="text-sm font-semibold text-[#222222]">✨ Your Plan is Ready!</p>
-          <h1 className="text-2xl font-bold text-[#FF5A5F]">{plan.name}</h1>
+          <h1 className="text-2xl font-bold text-[#FF5A5F]">{plan.title}</h1>
         </header>
 
         <section className="space-y-4">
@@ -46,14 +46,14 @@ export default function Screen09PlanOverview({
                     <p className="text-base font-semibold text-[#222222]">
                       {stop.venue_name}
                     </p>
-                    <p className="text-xs text-[#555555]">{stop.activity}</p>
+                    <p className="text-xs text-[#555555]">{stop.activity_type}</p>
                   </div>
                 </div>
                 <ChevronRight size={18} className="text-[#888888]" />
               </div>
               <div className="mt-3 flex items-center justify-between text-xs text-[#555555]">
-                <span>Time: {stop.arrival_time}</span>
-                <span>~{stop.duration_minutes} mins</span>
+                <span>Time: {stop.time_slot}</span>
+                <span>~{stop.estimated_time_minutes} mins</span>
                 <span>K{stop.estimated_cost.toFixed(0)}</span>
               </div>
             </article>
@@ -72,7 +72,7 @@ export default function Screen09PlanOverview({
           </div>
           <div className="mt-3 border-t border-dashed border-[#E5E5E5] pt-3">
             <p className="text-xs text-[#555555]">Total Estimated</p>
-            <p className="text-lg font-semibold text-[#222222]">K{plan.total_cost.toFixed(0)}</p>
+            <p className="text-lg font-semibold text-[#222222]">K{plan.estimated_cost.toFixed(0)}</p>
             <p className="text-xs text-[#888888]">Estimates based on average spend</p>
           </div>
         </section>

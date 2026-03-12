@@ -40,6 +40,12 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
     return venue.venue_prices;
   }, [venue.venue_prices]);
 
+  const getStarRating = (confidence: number) => {
+    if (confidence >= 0.9) return (4.8 + (confidence - 0.9) * 2).toFixed(1);
+    if (confidence >= 0.7) return (4.0 + (confidence - 0.7) * 3.5).toFixed(1);
+    return (3.5 + (confidence - 0.5) * 2.5).toFixed(1);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-[#F7F7F7] pb-28">
       <section className="relative h-[240px] w-full bg-[#FF5A5F]">
@@ -152,7 +158,7 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
         )}
       </section>
 
-      <footer className="fixed inset-x-0 bottom-0 border-t border-[#E5E5E5] bg-white px-5 py-4">
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-gray-100 bg-white p-4 pb-20">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-[#555555]">Average cost</p>

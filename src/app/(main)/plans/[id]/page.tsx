@@ -44,7 +44,7 @@ export default async function PlanDetailPage({ params }: PlanPageProps) {
     <Screen09PlanOverview
       plan={plan}
       stops={stopList}
-      plannerNote={plan.plan_data?.planner_note as string | undefined}
+      plannerNote={undefined}
     />
   );
 }

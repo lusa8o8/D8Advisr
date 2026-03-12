@@ -15,32 +15,50 @@ const BODY_SCHEMA = z.object({
 });
 
 const PLAN_SCHEMA = z.object({
-  plan_name: z.string(),
-  occasion: z.string(),
-  total_estimated_cost: z.number(),
-  currency: z.literal("ZMW"),
-  stops: z.array(
+  title: z.string(),
+  occasion: z.string().optional(),
+  total_estimated_cost_per_person: z.union([z.string(), z.number()]),
+  activities: z.array(
     z.object({
-      order: z.number(),
       venue_id: z.string(),
       venue_name: z.string(),
-      activity: z.string(),
-      duration_minutes: z.number(),
-      estimated_cost: z.number(),
-      arrival_time: z.string(),
-      notes: z.string().optional().nullable(),
+      activity_description: z.string(),
+      start_time: z.string(),
+      estimated_cost_per_person: z.union([z.string(), z.number()]),
+      tips: z.string().optional().nullable(),
     })
   ),
-  planner_note: z.string().optional(),
+  flow_notes: z.string().optional(),
 });
 
 const SYSTEM_PROMPT = `
 You are D8Advisr, an expert local experience planner for Lusaka, Zambia.
 You create personalised date and group plans using only real venues from the database.
 You never invent or fabricate venue information.
-Always consult the provided venue search output before recommending anything.
-Build plans that feel curated, not generic. Consider flow, timing, and budget carefully.
-Respond only with a single JSON object matching the agreed schema.
+
+Respond ONLY with a single valid JSON object with exactly these fields:
+{
+  "title": "Plan name", 
+  "occasion": "occasion type", 
+  "total_estimated_cost_per_person": 450, 
+  "activities": [
+    {
+      "venue_id": "uuid from available venues",
+      "venue_name": "venue name",
+      "activity_description": "what to do there",
+      "start_time": "18:30",
+      "estimated_cost_per_person": 150,
+      "tips": "optional tip"
+    }
+  ],
+  "flow_notes": "overall plan narrative"
+}
+
+IMPORTANT:
+- Use numeric values for all costs, not strings like "K450"
+- venue_id must be a real UUID from the available venues list
+- Include 2-3 activities maximum
+- No markdown, no code fences, just raw JSON
 `;
 
 export async function POST(request: NextRequest) {
@@ -137,6 +155,8 @@ Return the agreed JSON plan only.
   const planData = PLAN_SCHEMA.safeParse(parsedJson);
 
   if (!planData.success) {
+    console.error("ZOD ISSUES:", JSON.stringify(planData.error.issues, null, 2));
+    console.error("RAW JSON:", JSON.stringify(parsedJson, null, 2));
     return NextResponse.json(
       { error: "Plan output did not match expected schema." },
       { status: 502 }
@@ -144,23 +164,27 @@ Return the agreed JSON plan only.
   }
 
   const planJson = planData.data;
-  const planName = planJson.plan_name;
-  const planOccasion = planJson.occasion;
-  const totalCost = planJson.total_estimated_cost;
+  const parseCost = (val: string | number) =>
+    typeof val === "string" ? parseFloat(val.replace(/[^0-9.]/g, "")) : val;
+
+  const planName = planJson.title;
+  const planOccasion = planJson.occasion ?? payload.data.occasion ?? "General";
+  const totalCost = parseCost(planJson.total_estimated_cost_per_person);
   const groupSize = payload.data.plan_type === "group" ? payload.data.group_size ?? 2 : 1;
 
   const { data: createdPlan, error: planError } = await supabase
     .from("plans")
     .insert({
       user_id: user.id,
-      name: planName,
+      title: planName,
       occasion: planOccasion,
-      total_cost: totalCost,
-      currency: planJson.currency,
-      status: "generated",
+      estimated_cost: totalCost,
+      currency: "ZMW",
+      status: "draft",
       city: "Lusaka",
-      group_size: groupSize,
-      plan_data: planJson,
+      participant_count: groupSize,
+      vibe: (payload.data.vibes ?? []).join(", "),
+      source: "agent",
     })
     .select()
     .single();
@@ -169,17 +193,19 @@ Return the agreed JSON plan only.
     return NextResponse.json({ error: planError?.message ?? "Plan save failed" }, { status: 500 });
   }
 
-  const stopsPayload = planJson.stops.map((stop) => ({
+  const stopsPayload = planJson.activities.map((stop, index) => ({
     plan_id: createdPlan.id,
     venue_id: stop.venue_id,
-    order_index: stop.order,
-    activity: stop.activity,
-    duration_minutes: stop.duration_minutes,
-    estimated_cost: stop.estimated_cost,
-    arrival_time: stop.arrival_time,
-    notes: stop.notes ?? null,
+    order_index: index + 1,
+    activity_type: stop.activity_description,
+    estimated_time_minutes: 90,
+    estimated_cost: parseCost(stop.estimated_cost_per_person),
+    time_slot: stop.start_time,
+    notes: stop.tips ?? null,
   }));
 
+  // Store planner_note in plan_items notes or as first stop note
+  // Nothing to store separately - planner_note passed back in response
   const { error: stopsError } = await supabase.from("plan_items").insert(stopsPayload);
 
   if (stopsError) {
@@ -210,6 +236,7 @@ Return the agreed JSON plan only.
     return NextResponse.json({
       plan_id: createdPlan.id,
       plan: planJson,
+      planner_note: planJson.flow_notes ?? null,
     });
   } catch (error) {
     console.error(error);

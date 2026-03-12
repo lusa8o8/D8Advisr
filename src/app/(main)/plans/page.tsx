@@ -49,12 +49,12 @@ export default async function PlansPage() {
                 className="flex items-center justify-between rounded-2xl border border-[#E5E5E5] bg-white px-4 py-3 text-sm no-underline transition hover:border-[#FF5A5F]"
               >
                 <div>
-                  <p className="text-base font-semibold text-[#222222]">{plan.name}</p>
+                  <p className="text-base font-semibold text-[#222222]">{plan.title}</p>
                   <p className="text-xs text-[#555555]">{plan.occasion}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-[#FF5A5F]">
-                    K{plan.total_cost.toFixed(0)}
+                    K{plan.estimated_cost.toFixed(0)}
                   </p>
                   <p className="text-xs text-[#888888]">{plan.status}</p>
                 </div>
