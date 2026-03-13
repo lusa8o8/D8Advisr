@@ -1,12 +1,29 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, House, User } from "lucide-react";
 
+const WalletIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect x="2" y="5" width="20" height="14" rx="2" ry="2" />
+    <path d="M2 9h20" />
+    <circle cx="18" cy="12" r="2" />
+  </svg>
+)
+
 const tabs = [
   { label: "Home", href: "/home", icon: House },
   { label: "Plans", href: "/plans", icon: CalendarDays },
+  { label: "Budget", href: "/budget", icon: WalletIcon },
   { label: "Profile", href: "/profile", icon: User },
 ];
 

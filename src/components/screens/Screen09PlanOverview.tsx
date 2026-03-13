@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, ChevronRight, Repeat } from "lucide-react";
 import type { Plan, PlanItem } from "@/types/database";
 
-type StopWithVenue = PlanItem & {
+export export type StopWithVenue = PlanItem & {
   venue_name: string;
 };
 

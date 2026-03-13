@@ -34,8 +34,13 @@ export default async function PlansPage({}: PlansPageProps) {
   return (
     <div className="min-h-screen bg-[#F7F7F7] pb-32">
       <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
-        <header>
-          <h1 className="text-2xl font-bold text-[#222222]">Your Plans</h1>
+        <header className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-[#222222]">Your Plans</h1>
+            <Link href="/plans/group/new" className="rounded-full border border-[#FF5A5F] px-4 py-1 text-xs font-semibold text-[#FF5A5F]">
+              ?? Group Plan
+            </Link>
+          </div>
           <p className="text-sm text-[#555555]">Plan something memorable every time.</p>
         </header>
 
