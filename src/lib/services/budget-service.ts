@@ -48,7 +48,7 @@ export async function getBudgetSummary(
   const spent = logs?.reduce((sum, log) => sum + (log.actual_cost ?? 0), 0) ?? 0
 
   const plans: BudgetPlanRow[] = (logs ?? [])
-    .map((log) => ({
+    .map((log: any) => ({
       id: log.plan?.id ?? log.plan_id,
       plan_id: log.plan_id,
       title: log.plan?.title ?? 'Plan',
