@@ -53,7 +53,7 @@ export async function POST(
       currency: "ZMW",
       overall_rating: payload.data.overall_rating,
       notes: payload.data.notes ?? "",
-      highlights: payload.data.highlights.join(", "),
+      highlights: payload.data.highlights.length > 0 ? `{${payload.data.highlights.join(",")}}` : "{}",
     })
     .select()
     .single();
