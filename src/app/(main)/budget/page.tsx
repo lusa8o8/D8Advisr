@@ -19,7 +19,8 @@ export default async function BudgetPage() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const month = new Date().toISOString().slice(0, 7);
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const summary = await getBudgetSummary(supabase, user.id, month);
 
   return (

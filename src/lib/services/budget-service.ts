@@ -21,6 +21,7 @@ export async function getBudgetSummary(
     .from('plans')
     .select('id')
     .eq('user_id', userId)
+    .eq('status', 'completed')
 
   const planIds = planRows?.map((plan) => plan.id) ?? []
 
