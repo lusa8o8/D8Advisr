@@ -1,14 +1,14 @@
 ﻿import { redirect } from "next/navigation";
-import Screen10PlanDetail, { PlanStopWithVenue } from "@/components/screens/Screen10PlanDetail";
+import Screen12ExecutionTracker from "@/components/screens/Screen12ExecutionTracker";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type PlanPageProps = {
+type ExecutePageProps = {
   params: {
     id: string;
   };
 };
 
-export default async function PlanDetailPage({ params }: PlanPageProps) {
+export default async function PlanExecutePage({ params }: ExecutePageProps) {
   const supabase = createSupabaseServerClient();
   const {
     data: { user },
@@ -28,8 +28,8 @@ export default async function PlanDetailPage({ params }: PlanPageProps) {
     redirect("/plans");
   }
 
-  if (plan.status === "active") {
-    redirect(`/plans/${params.id}/execute`);
+  if (plan.status !== "active") {
+    redirect(`/plans/${params.id}`);
   }
 
   const { data: stops } = await supabase
@@ -38,13 +38,13 @@ export default async function PlanDetailPage({ params }: PlanPageProps) {
     .eq("plan_id", params.id)
     .order("order_index");
 
-  const stopList: PlanStopWithVenue[] =
+  const stopList =
     stops?.map((stop) => ({
       ...stop,
       venue_name: stop.venue?.name ?? stop.venue_id,
       venue: stop.venue,
     })) ?? [];
 
-  return <Screen10PlanDetail plan={plan} stops={stopList} />;
+  return <Screen12ExecutionTracker plan={plan} stops={stopList} />;
 }
 
