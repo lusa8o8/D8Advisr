@@ -53,10 +53,13 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
 
       const { error } = await action;
       if (error) {
-        toast.error(error.message);
+        if (error.message?.toLowerCase().includes('already registered')) {
+          toast.error('Account already exists. Please sign in instead.');
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
-
       toast.success("Success!");
       router.refresh();
       router.push(redirectUrl);
