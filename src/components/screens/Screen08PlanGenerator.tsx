@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const OCCASION_OPTIONS = [
-  "Birthday",
-  "Anniversary",
+  "Date Night",
   "First Date",
+  "Anniversary",
   "Casual Hangout",
   "Celebration",
   "Just Because",
@@ -36,6 +36,13 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
   const [vibeSelection, setVibeSelection] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusIndex, setStatusIndex] = useState(0);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("mode") === "group") {
+      setPlanType("group");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -110,7 +117,7 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
         </button>
 
         <div>
-          <h1 className="text-3xl font-bold text-[#222222]">Generate a Plan</h1>
+          <h1 className="text-3xl font-bold text-[#222222]">Build Your Plan</h1>
           <p className="text-sm text-[#555555]">Tell us what you're looking for</p>
         </div>
 
@@ -152,7 +159,7 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
         </div>
 
         <div className="space-y-2 rounded-2xl border border-[#E5E5E5] bg-white p-4">
-          <p className="text-sm font-semibold text-[#222222]">Vibe</p>
+          <p className="text-sm font-semibold text-[#222222]">Vibe / Mood</p>
           <div className="flex flex-wrap gap-2">
             {VIBE_OPTIONS.map((option) => (
               <button
@@ -225,7 +232,7 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
           disabled={!canGenerate}
           className="mt-4 flex items-center justify-center rounded-2xl bg-[#FF5A5F] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {isLoading ? "🤔 Finding the perfect plan..." : "✨ Generate My Plan"}
+          {isLoading ? "🤔 Finding the perfect plan..." : "Generate My Plan ✨"}
         </button>
       </div>
 

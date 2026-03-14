@@ -56,7 +56,7 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
     <div className="min-h-screen bg-[#222222] pb-32 text-white">
       <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
         <header className="space-y-1">
-          <p className="text-sm text-white/70">You're on your date! ???</p>
+          <p className="text-sm text-white/70">You're on your date!</p>
           <h1 className="text-3xl font-bold text-[#FF5A5F]">{plan.title}</h1>
         </header>
 
@@ -89,14 +89,14 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
               onClick={goToMaps}
               className="flex-1 rounded-xl border border-[#FF5A5F] px-4 py-3 text-sm font-semibold text-[#FF5A5F]"
             >
-              ?? Directions
+              Directions
             </button>
             <button
               type="button"
               onClick={markComplete}
               className="flex-1 rounded-xl bg-[#00C851] px-4 py-3 text-sm font-semibold text-white"
             >
-              ? Mark Complete
+              Mark Complete
             </button>
           </div>
         </section>
@@ -105,7 +105,7 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 p-4">
           <div className="rounded-2xl bg-white p-6 text-center text-[#222222]">
-            <p className="text-2xl font-bold">?? You did it!</p>
+            <p className="text-2xl font-bold">You did it!</p>
             <p className="mt-2 text-sm text-[#555]">How was your experience?</p>
             <div className="mt-4 flex flex-col gap-3">
               <button

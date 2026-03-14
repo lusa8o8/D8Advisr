@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Plan } from "@/types/database";
+import PlansEmpty from '@/components/screens/Screen_PlansEmpty';
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-[#E5E5E5] text-[#222222]",
@@ -31,7 +32,8 @@ export default async function PlansPage({}: PlansPageProps) {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  return (
+if (!plans || plans.length === 0) return <PlansEmpty />;  
+return (
     <div className="min-h-screen bg-[#F7F7F7] pb-32">
       <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
         <header className="space-y-3">

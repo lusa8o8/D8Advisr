@@ -26,8 +26,13 @@ export default function Screen09PlanOverview({
   return (
     <div className="min-h-screen bg-[#F7F7F7] pb-32">
       <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 py-6">
+        <div className="text-center py-6">
+          <div className="text-5xl mb-3">🎉</div>
+          <h1 className="text-2xl font-bold text-[#222222]">Your Plan is Ready!</h1>
+          <p className="text-sm text-[#555555] mt-1">We've curated the perfect evening.</p>
+        </div>
         <header>
-          <p className="text-sm font-semibold text-[#222222]">✨ Your Plan is Ready!</p>
+          <p className="text-sm font-semibold text-[#222222]">Your Plan Overview</p>
           <h1 className="text-2xl font-bold text-[#FF5A5F]">{plan.title}</h1>
         </header>
 
@@ -73,7 +78,7 @@ export default function Screen09PlanOverview({
           <div className="mt-3 border-t border-dashed border-[#E5E5E5] pt-3">
             <p className="text-xs text-[#555555]">Total Estimated</p>
             <p className="text-lg font-semibold text-[#222222]">K{plan.estimated_cost.toFixed(0)}</p>
-            <p className="text-xs text-[#888888]">Estimates based on average spend</p>
+            <p className="text-xs text-[#888888]">Per person estimate · Lusaka, Zambia</p>
           </div>
         </section>
 
@@ -107,7 +112,7 @@ export default function Screen09PlanOverview({
             disabled={isUpdating}
           >
             <Check size={16} />
-            Accept Plan
+            Accept Plan ✓
           </button>
           <button
             type="button"
