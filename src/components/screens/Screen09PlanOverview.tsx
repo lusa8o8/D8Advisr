@@ -89,7 +89,7 @@ export default function Screen09PlanOverview({
           </section>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-3 w-full">
           <button
             type="button"
             onClick={async () => {
@@ -108,7 +108,7 @@ export default function Screen09PlanOverview({
                 setIsUpdating(false);
               }
             }}
-            className="flex items-center justify-center gap-2 rounded-2xl bg-[#00C851] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#00C851] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
             disabled={isUpdating}
           >
             <Check size={16} />
@@ -117,7 +117,7 @@ export default function Screen09PlanOverview({
           <button
             type="button"
             onClick={() => router.push(`/plans/${plan.id}/edit`)}
-            className="flex items-center justify-center gap-2 rounded-2xl border border-[#FF5A5F] px-6 py-3 text-sm font-semibold text-[#FF5A5F]"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#FF5A5F] px-6 py-3 text-sm font-semibold text-[#FF5A5F]"
           >
             <Repeat size={16} />
             Tweak Plan

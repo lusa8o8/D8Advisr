@@ -78,7 +78,7 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
         </div>
 
         <section className="rounded-2xl bg-white p-4 text-[#222222] shadow-lg">
-          <p className="text-xs text-[#555]">Current Stop</p>
+          <p className="text-xs text-[#555]">{currentIndex === 0 ? "1st Stop" : currentIndex === 1 ? "2nd Stop" : currentIndex === 2 ? "3rd Stop" : `Stop ${currentIndex + 1}`}</p>
           <h2 className="text-xl font-bold">{currentStop.venue_name}</h2>
           <p className="text-sm text-[#555]">{currentStop.activity_type}</p>
           <p className="text-sm text-[#555]">{currentStop.time_slot}</p>
