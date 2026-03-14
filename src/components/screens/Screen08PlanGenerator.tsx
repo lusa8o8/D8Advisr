@@ -96,7 +96,7 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
         throw new Error(payload?.error ?? "Could not generate plan.");
       }
 
-      router.push(`/plans/${payload.plan_id}`);
+      router.push(`/plans/${payload.plan_id}/overview`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to generate plan.");
     } finally {
