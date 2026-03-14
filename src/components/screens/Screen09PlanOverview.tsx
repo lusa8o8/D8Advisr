@@ -45,7 +45,7 @@ export default function Screen09PlanOverview({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FF5A5F]/10 text-sm font-semibold text-[#FF5A5F]">
-                    {stop.order_index}
+                    {stop.order_index + 1}
                   </span>
                   <div>
                     <p className="text-base font-semibold text-[#222222]">
@@ -103,7 +103,7 @@ export default function Screen09PlanOverview({
                 if (!response.ok) {
                   throw new Error("Unable to update status.");
                 }
-                router.push("/plans");
+                router.push(`/plans/${plan.id}`);
               } catch {
                 setIsUpdating(false);
               }
@@ -116,11 +116,18 @@ export default function Screen09PlanOverview({
           </button>
           <button
             type="button"
-            onClick={() => router.push("/plans/generate")}
+            onClick={() => router.push(`/plans/${plan.id}/edit`)}
             className="flex items-center justify-center gap-2 rounded-2xl border border-[#FF5A5F] px-6 py-3 text-sm font-semibold text-[#FF5A5F]"
           >
             <Repeat size={16} />
-            Regenerate
+            Tweak Plan
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/plans/generate")}
+            className="text-sm text-[#555555] text-center w-full py-2"
+          >
+            Start Over
           </button>
         </div>
       </div>
