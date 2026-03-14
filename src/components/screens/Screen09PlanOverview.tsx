@@ -98,7 +98,7 @@ export default function Screen09PlanOverview({
                 const response = await fetch(`/api/plans/${plan.id}/status`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status: "confirmed" }),
+                  body: JSON.stringify({ status: "saved" }),
                 });
                 if (!response.ok) {
                   throw new Error("Unable to update status.");
