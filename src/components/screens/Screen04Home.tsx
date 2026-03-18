@@ -1,13 +1,11 @@
 "use client"
 
-import { Filter } from "lucide-react";
+import { Filter, Search, Star, Heart, ChevronRight } from "lucide-react";
 import TopBar from "@/components/layout/TopBar";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Venue } from "@/types/database";
-import { CategoryPill } from "@/components/ui/CategoryPill";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
-import { VenueCard } from "@/components/ui/VenueCard";
 import FilterModal, { FilterState } from "@/components/screens/Screen06FilterModal";
 
 const CATEGORY_OPTIONS = [
@@ -95,6 +93,15 @@ function matchesMood(venue: Venue, moods: string[]) {
   });
 }
 
+function categoryGradient(category: string) {
+  switch (category) {
+    case "restaurant": return "from-rose-400 to-red-500";
+    case "bar": return "from-amber-400 to-orange-500";
+    case "activity": return "from-emerald-400 to-green-500";
+    default: return "from-[#FF5A5F] to-rose-600";
+  }
+}
+
 export type Screen04HomeProps = {
   initialVenues: Venue[];
   firstName: string;
@@ -111,6 +118,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
   const [error, setError] = useState("");
   const [filterDraft, setFilterDraft] = useState<FilterState>(createDefaultFilters());
   const [appliedFilters, setAppliedFilters] = useState<FilterState>(createDefaultFilters());
+  const [view, setView] = useState<"feed" | "map">("feed");
 
   useEffect(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
@@ -144,15 +152,11 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
     setDisplayVenues(filtered);
   }, [serverVenues, searchQuery, selectedCategory, appliedFilters]);
 
-  const greeting = useMemo(() => {
+  const timeOfDay = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 12) {
-      return "Good morning";
-    }
-    if (hour < 17) {
-      return "Good afternoon";
-    }
-    return "Good evening";
+    if (hour < 12) return "morning";
+    if (hour < 17) return "afternoon";
+    return "evening";
   }, []);
 
   const handleApplyFilters = async (filters: FilterState) => {
@@ -198,72 +202,87 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
     router.push(`/venues/${venue.id}`);
   };
 
-  const handleSaveVenue = (venue: Venue) => {
-    console.log("Save venue:", venue.name);
-  };
-
   const hasVenues = displayVenues.length > 0;
 
   return (
-    <section className="flex min-h-screen w-full flex-col bg-[#F7F7F7] pb-32 no-scrollbar">
+    <section className="flex min-h-screen w-full flex-col bg-[#F7F7F7]">
       <TopBar />
-      <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 px-4 pt-4">
 
-        <div>
-          <p className="text-lg font-semibold text-[#222222]">
-            {greeting}, {firstName} 👋
-          </p>
-          <p className="text-sm text-[#555555]">Curated venues and surprise plans await.</p>
+      {/* CHANGE 6 — Section spacing */}
+      <div className="flex-1 overflow-y-auto pb-28 no-scrollbar">
+
+        {/* Greeting + Search */}
+        <div className="px-6 pt-6 pb-2">
+          {/* CHANGE 1 — Greeting */}
+          <h1 className="text-[28px] font-bold text-[#222222] mb-5">
+            Good {timeOfDay}, {firstName} 👋
+          </h1>
+
+          {/* CHANGE 2 — Search bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Find venues, activities, moods..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-12 py-3.5 bg-white border border-[#EBEBEB] rounded-2xl shadow-sm font-medium text-[#222222] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF5A5F]/20"
+            />
+            <button
+              type="button"
+              onClick={() => setIsFilterOpen(true)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#F7F7F7] p-2 rounded-xl text-[#222222]"
+            >
+              <Filter size={18} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-full border border-[#E5E5E5] bg-white px-4 py-2">
-          <input
-            type="search"
-            className="w-full border-0 bg-transparent p-0 text-sm text-[#222222] focus:outline-none"
-            placeholder="Find venues, activities, mood..."
-            aria-label="Search venues"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-          />
-          <button
-            type="button"
-            onClick={() => setIsFilterOpen(true)}
-            className="rounded-full bg-[#FF5A5F] p-2 text-white"
-          >
-            <Filter size={18} />
-          </button>
-        </div>
-
-        <div className="flex overflow-x-auto no-scrollbar pb-3">
-          <div className="flex gap-2">
+        {/* CHANGE 3 — Category pills */}
+        <div className="px-6 py-4">
+          <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x pb-2">
             {CATEGORY_OPTIONS.map((category) => (
-              <CategoryPill
+              <button
                 key={category}
-                label={category}
-                selected={selectedCategory === category}
-                onSelect={() => setSelectedCategory(category as CategoryFilter)}
-              />
+                type="button"
+                onClick={() => setSelectedCategory(category as CategoryFilter)}
+                className={
+                  selectedCategory === category
+                    ? "snap-start whitespace-nowrap px-5 py-2.5 rounded-full font-semibold text-sm bg-[#222222] text-white shadow-md"
+                    : "snap-start whitespace-nowrap px-5 py-2.5 rounded-full font-semibold text-sm bg-white text-[#555555] border border-[#EBEBEB]"
+                }
+              >
+                {category}
+              </button>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-3 rounded-full bg-white px-2 py-1.5 shadow-sm">
-          <button
-            type="button"
-            className="flex-1 rounded-full px-4 py-2 text-sm font-semibold transition bg-[#FF5A5F] text-white"
-          >
-            Feed
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/map")}
-            className="flex-1 rounded-full px-4 py-2 text-sm font-semibold transition text-[#555555]"
-          >
-            Map
-          </button>
-        </div>
+        {/* Toggle + Cards */}
+        <div className="px-6">
+          {/* CHANGE 4 — Feed/Map toggle */}
+          <div className="bg-white rounded-full p-1 shadow-sm flex border border-[#EBEBEB] mb-4">
+            <button
+              type="button"
+              onClick={() => setView("feed")}
+              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${
+                view === "feed" ? "bg-[#FF5A5F] text-white shadow-sm" : "text-[#555555]"
+              }`}
+            >
+              Feed
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/map")}
+              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${
+                view === "map" ? "bg-[#FF5A5F] text-white shadow-sm" : "text-[#555555]"
+              }`}
+            >
+              Map
+            </button>
+          </div>
 
-        <div className="flex flex-col gap-4">
+          {/* CHANGE 5 — Venue cards */}
           {isLoading ? (
             <>
               <SkeletonCard />
@@ -291,12 +310,47 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
             </div>
           ) : (
             displayVenues.map((venue) => (
-              <VenueCard
+              <div
                 key={venue.id}
-                venue={venue}
-                onPress={() => handleVenueSelect(venue)}
-                onSave={() => handleSaveVenue(venue)}
-              />
+                onClick={() => handleVenueSelect(venue)}
+                className="bg-white rounded-3xl overflow-hidden shadow-sm border border-[#EBEBEB] cursor-pointer hover:shadow-md transition-shadow mb-5"
+              >
+                {/* Hero */}
+                <div className={`h-40 bg-gradient-to-br ${categoryGradient(venue.category)} relative flex items-center justify-center`}>
+                  <span className="text-5xl opacity-30">
+                    {venue.category === "restaurant" ? "🍽️" : venue.category === "bar" ? "🍸" : venue.category === "activity" ? "🏛️" : "📍"}
+                  </span>
+                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-[#222222] flex items-center gap-1 shadow-sm">
+                    <Star size={12} className="fill-[#FF9500] text-[#FF9500]" />
+                    {venue.confidence_score
+                      ? (venue.confidence_score * 5).toFixed(1)
+                      : "4.8"}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-5">
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-bold text-[18px] text-[#222222]">{venue.name}</h3>
+                    <span className="font-bold text-[15px] text-[#FF5A5F]">
+                      {"K".repeat(venue.price_level ?? 2)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-3 font-medium capitalize">
+                    {venue.category}{venue.activity_type ? ` · ${venue.activity_type}` : ""}
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); }}
+                      className="w-9 h-9 rounded-full bg-[#F7F7F7] flex items-center justify-center"
+                    >
+                      <Heart size={18} className="text-[#555555]" />
+                    </button>
+                    <ChevronRight size={20} className="text-[#EBEBEB]" />
+                  </div>
+                </div>
+              </div>
             ))
           )}
         </div>
