@@ -24,7 +24,7 @@ type CategoryFilter = (typeof CATEGORY_OPTIONS)[number];
 
 const createDefaultFilters = (): FilterState => ({
   category: undefined,
-  priceLevel: 2,
+  priceLevel: 1000,
   distance: 10,
   moods: [],
 });

@@ -19,7 +19,6 @@ const CATEGORY_OPTIONS = [
 ];
 
 const MOOD_OPTIONS = ["Romantic", "Fun", "Chill", "Adventurous"];
-const PRICE_LABELS = ["$", "$$", "$$$", "$$$$"];
 
 type FilterModalProps = {
   open: boolean;
@@ -48,7 +47,7 @@ export default function FilterModal({
   };
 
   const resetFilters = () => {
-    setDraft({ category: undefined, priceLevel: 2, distance: 10, moods: [] });
+    setDraft({ category: undefined, priceLevel: 1000, distance: 10, moods: [] });
     onReset();
   };
 
@@ -76,19 +75,23 @@ export default function FilterModal({
           </section>
 
           <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#222222]">Price Range</p>
-              <span className="text-xs text-[#555555]">
-                {PRICE_LABELS[draft.priceLevel - 1] ?? "$$"}
-              </span>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-bold text-[#222222] text-sm">Price Range</h3>
+              <span className="text-[#FF5A5F] font-bold text-sm">K50 — K{draft.priceLevel}</span>
             </div>
-            <Slider
-              min={1}
-              max={4}
-              step={1}
-              value={[draft.priceLevel]}
-              onValueChange={(value) => setDraft({ ...draft, priceLevel: value[0] })}
+            <input
+              type="range"
+              min="50"
+              max="1000"
+              step="50"
+              value={draft.priceLevel}
+              onChange={(e) => setDraft({ ...draft, priceLevel: Number(e.target.value) })}
+              className="w-full accent-[#FF5A5F] h-1.5 bg-[#EBEBEB] rounded-lg appearance-none cursor-pointer"
             />
+            <div className="flex justify-between text-xs text-[#999999] font-bold mt-2">
+              <span>K50</span>
+              <span>K1000+</span>
+            </div>
           </section>
 
           <section className="space-y-3">
