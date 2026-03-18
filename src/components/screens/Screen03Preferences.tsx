@@ -82,25 +82,13 @@ export default function Screen03Preferences({
   return (
     <div className="flex min-h-screen flex-col justify-between gap-6 bg-background px-6 py-8 text-text-secondary">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => router.push("/signup")}
-            className="text-sm font-semibold text-text-secondary transition hover:text-text-primary"
-          >
-            &larr; Back
-          </button>
-          <div className="flex items-center gap-2">
-            {[0, 1, 2].map((dot) => (
-              <span
-                key={dot}
-                className={`h-2 w-2 rounded-full ${
-                  dot === 0 ? "bg-[#FF5A5F]" : "bg-border"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => router.push("/signup")}
+          className="text-sm font-semibold text-text-secondary transition hover:text-text-primary"
+        >
+          &larr; Back
+        </button>
 
         <div>
           <h1 className="text-3xl font-bold text-text-primary">What do you love?</h1>
