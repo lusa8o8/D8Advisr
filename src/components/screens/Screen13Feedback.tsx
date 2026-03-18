@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -101,6 +101,16 @@ export default function Screen13Feedback({ plan, stops }: Screen13FeedbackProps)
     }
   };
 
+  // CHANGE 3: Dynamic rating label
+  const ratingLabel =
+    overallRating === 0
+      ? "Tap to rate"
+      : overallRating === 5
+      ? "Incredible!"
+      : overallRating >= 3
+      ? "Good"
+      : "Could be better";
+
   return (
     <div className="min-h-screen bg-[#F7F7F7] pb-24">
       <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
@@ -109,19 +119,22 @@ export default function Screen13Feedback({ plan, stops }: Screen13FeedbackProps)
           <p className="text-sm text-[#555555]">{plan.title}</p>
         </header>
 
-        <section className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-[#222222]">Overall Rating</p>
-          <div className="mt-2 flex gap-1">
+        {/* CHANGE 6: Overall rating wrapped in card */}
+        <div className="bg-white rounded-3xl p-8 shadow-sm border border-[#EBEBEB] flex flex-col items-center mb-6">
+          <p className="text-sm font-semibold text-[#222222] mb-2">Overall Rating</p>
+          <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((value) => (
               <StarButton
                 key={value}
-                size={32}
+                size={40}
                 filled={overallRating >= value}
                 onClick={() => setOverallRating(value)}
               />
             ))}
           </div>
-        </section>
+          {/* CHANGE 3: Dynamic label */}
+          <p className="font-bold text-[#222222] text-lg mt-2">{ratingLabel}</p>
+        </div>
 
         <section className="space-y-3">
           {stops.map((stop) => (
@@ -143,6 +156,7 @@ export default function Screen13Feedback({ plan, stops }: Screen13FeedbackProps)
           ))}
         </section>
 
+        {/* CHANGE 4: Selected highlight chip → bg-[#222222] */}
         <section className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
           <p className="text-sm font-semibold text-[#222222]">Highlights</p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -155,8 +169,8 @@ export default function Screen13Feedback({ plan, stops }: Screen13FeedbackProps)
                   onClick={() => toggleHighlight(highlight)}
                   className={`rounded-full border px-4 py-1 text-xs font-semibold transition ${
                     selected
-                      ? "bg-[#FF5A5F] text-white"
-                      : "border-[#E5E5E5] text-[#555555] bg-white"
+                      ? "bg-[#222222] text-white border-[#222222]"
+                      : "bg-white border-[#EBEBEB] text-[#555555]"
                   }`}
                 >
                   {highlight}
@@ -166,8 +180,9 @@ export default function Screen13Feedback({ plan, stops }: Screen13FeedbackProps)
           </div>
         </section>
 
+        {/* CHANGE 2: Notes label → "Any memories to log?" */}
         <section className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
-          <label className="text-sm font-semibold text-[#222222]">Notes</label>
+          <label className="text-sm font-semibold text-[#222222]">Any memories to log?</label>
           <textarea
             className="mt-2 w-full resize-none rounded-2xl border border-[#E5E5E5] bg-[#FAFAFA] p-3 text-sm text-[#222222]"
             placeholder="Share more about your experience..."
@@ -179,13 +194,23 @@ export default function Screen13Feedback({ plan, stops }: Screen13FeedbackProps)
           <p className="mt-2 text-right text-xs text-[#888888]">{notes.length}/500</p>
         </section>
 
+        {/* CHANGE 1: Save Review button — green */}
         <button
           type="button"
           disabled={!overallRating || isSaving}
           onClick={handleSubmit}
-          className="rounded-xl bg-[#FF5A5F] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          className="w-full rounded-xl bg-[#00C851] px-6 py-4 font-bold text-[16px] text-white shadow-[0_8px_20px_-6px_rgba(0,200,81,0.5)] disabled:opacity-60 active:scale-[0.98] transition-all"
         >
-          {isSaving ? "Saving..." : "Submit Feedback"}
+          {isSaving ? "Saving..." : "Save Review"}
+        </button>
+
+        {/* CHANGE 5: Share to Feed placeholder */}
+        <button
+          type="button"
+          onClick={() => toast("Coming soon!")}
+          className="w-full bg-white text-[#222222] border-2 border-[#EBEBEB] py-4 rounded-xl font-bold text-[16px] active:scale-[0.98] transition-all mt-3"
+        >
+          Share to Feed
         </button>
       </div>
     </div>
