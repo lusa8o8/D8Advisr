@@ -1,6 +1,7 @@
 "use client"
 
-import { Bell, Filter, Settings } from "lucide-react";
+import { Filter } from "lucide-react";
+import TopBar from "@/components/layout/TopBar";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Venue } from "@/types/database";
@@ -206,28 +207,9 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
   const hasVenues = displayVenues.length > 0;
 
   return (
-    <section className="flex min-h-screen w-full flex-col bg-[#F7F7F7] pb-32 pt-4">
-      <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 px-4">
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">
-            <span className="text-[#FF5A5F]">D8</span>
-            <span className="text-[#222222]">Advisr</span>
-          </h1>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="rounded-2xl border border-[#E5E5E5] bg-white p-2 shadow-sm transition hover:border-[#FF5A5F]"
-            >
-              <Bell size={20} className="text-[#222222]" />
-            </button>
-            <button
-              type="button"
-              className="rounded-2xl border border-[#E5E5E5] bg-white p-2 shadow-sm transition hover:border-[#FF5A5F]"
-            >
-              <Settings size={20} className="text-[#222222]" />
-            </button>
-          </div>
-        </header>
+    <section className="flex min-h-screen w-full flex-col bg-[#F7F7F7] pb-32">
+      <TopBar />
+      <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 px-4 pt-4">
 
         <div>
           <p className="text-lg font-semibold text-[#222222]">

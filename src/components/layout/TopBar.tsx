@@ -1,15 +1,23 @@
-export function TopBar() {
+"use client";
+import Link from "next/link";
+import { Bell, Settings } from "lucide-react";
+
+export default function TopBar() {
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-white/80 px-6 py-4 backdrop-blur">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-text-secondary">
-            D8Advisr
-          </p>
-          <p className="text-lg font-bold text-text-primary">Lusaka experience studio</p>
-        </div>
-        <span className="text-sm text-text-secondary">Today</span>
+    <div className="px-6 pt-14 pb-4 flex justify-between items-center sticky top-0 z-20 bg-white shadow-sm">
+      <Link href="/home" className="flex items-baseline gap-0">
+        <span className="font-bold text-2xl text-[#FF5A5F] tracking-tight">D8</span>
+        <span className="font-bold text-2xl text-[#222222] tracking-tight">Advisr</span>
+      </Link>
+      <div className="flex items-center gap-4">
+        <Link href="/notifications" className="relative text-[#222222]">
+          <Bell size={24} />
+          <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-[#FF5A5F] rounded-full border-2 border-white"></span>
+        </Link>
+        <Link href="/profile/preferences" className="text-[#222222]">
+          <Settings size={24} />
+        </Link>
       </div>
-    </header>
+    </div>
   );
 }
