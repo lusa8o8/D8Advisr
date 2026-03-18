@@ -9,7 +9,6 @@ import { CategoryPill } from "@/components/ui/CategoryPill";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { VenueCard } from "@/components/ui/VenueCard";
 import FilterModal, { FilterState } from "@/components/screens/Screen06FilterModal";
-import Screen05Map from "@/components/screens/Screen05Map";
 
 const CATEGORY_OPTIONS = [
   "All",
@@ -103,7 +102,6 @@ export type Screen04HomeProps = {
 
 export default function Screen04Home({ initialVenues, firstName }: Screen04HomeProps) {
   const router = useRouter();
-  const [view, setView] = useState<"feed" | "map">("feed");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("All");
   const [serverVenues, setServerVenues] = useState<Venue[]>(initialVenues);
@@ -250,18 +248,19 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
         </div>
 
         <div className="flex items-center justify-center gap-3 rounded-full bg-white px-2 py-1.5 shadow-sm">
-          {["feed", "map"].map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setView(option as "feed" | "map")}
-              className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                view === option ? "bg-[#FF5A5F] text-white" : "text-[#555555]"
-              }`}
-            >
-              {option === "feed" ? "Feed" : "Map"}
-            </button>
-          ))}
+          <button
+            type="button"
+            className="flex-1 rounded-full px-4 py-2 text-sm font-semibold transition bg-[#FF5A5F] text-white"
+          >
+            Feed
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/map")}
+            className="flex-1 rounded-full px-4 py-2 text-sm font-semibold transition text-[#555555]"
+          >
+            Map
+          </button>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -290,7 +289,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
                 Check back soon — we're adding new spots!
               </p>
             </div>
-          ) : view === "feed" ? (
+          ) : (
             displayVenues.map((venue) => (
               <VenueCard
                 key={venue.id}
@@ -299,12 +298,6 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
                 onSave={() => handleSaveVenue(venue)}
               />
             ))
-          ) : (
-            <Screen05Map
-              venues={displayVenues}
-              onCardPress={handleVenueSelect}
-              onCardSave={handleSaveVenue}
-            />
           )}
         </div>
       </div>
