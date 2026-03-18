@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import { ArrowLeft } from "lucide-react";
 import VibePill from "@/components/ui/VibePill";
 import { supabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -43,7 +43,7 @@ export default function Screen03Preferences({
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [budget, setBudget] = useState(150);
   const [groupSize, setGroupSize] = useState<number>(groupOptions[1].value);
-  const [saving, setSaving] = useState(false);
+  const [loading, setSaving] = useState(false);
 
   const toggleVibe = (label: string) => {
     setSelectedVibes((current) =>
@@ -53,7 +53,7 @@ export default function Screen03Preferences({
     );
   };
 
-  const handleContinue = async () => {
+  const handleSubmit = async () => {
     if (!selectedVibes.length) return;
     setSaving(true);
     const payload: Database["public"]["Tables"]["user_preferences"]["Insert"] = {
@@ -80,25 +80,29 @@ export default function Screen03Preferences({
   };
 
   return (
-    <div className="flex min-h-screen flex-col justify-between gap-6 bg-background px-6 py-8 text-text-secondary">
-      <div className="space-y-6">
+    <div className="min-h-screen bg-[#F7F7F7] overflow-y-auto pb-32">
+      {/* CHANGE 1: Sticky header */}
+      <div className="px-6 pt-14 pb-6 sticky top-0 bg-white z-20 border-b border-[#EBEBEB]">
         <button
-          type="button"
-          onClick={() => router.push("/signup")}
-          className="text-sm font-semibold text-text-secondary transition hover:text-text-primary"
+          onClick={() => router.back()}
+          className="w-10 h-10 bg-[#F7F7F7] rounded-full flex items-center justify-center text-[#222222] mb-6"
         >
-          &larr; Back
+          <ArrowLeft size={20} />
         </button>
+        <h1 className="text-[32px] font-bold text-[#222222] leading-tight mb-2">
+          What do you love?
+        </h1>
+        <p className="text-[#555555] text-[15px] leading-relaxed">
+          Select a few vibes to help us curate the perfect experiences for you.
+        </p>
+      </div>
 
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">What do you love?</h1>
-          <p className="text-sm text-text-secondary">
-            Select a few vibes to help us curate the perfect dates for you.
-          </p>
-        </div>
+      {/* CHANGE 5: Content wrapper */}
+      <div className="px-6 py-8 flex flex-col gap-8">
 
-        <section className="space-y-3">
-          <p className="text-sm font-semibold text-text-primary">Vibes</p>
+        {/* CHANGE 2: Vibes section */}
+        <section>
+          <h3 className="font-bold text-[#222222] text-[17px] mb-3">Favourite Vibes</h3>
           <div className="flex flex-wrap gap-2">
             {vibeOptions.map((vibe) => (
               <VibePill
@@ -111,27 +115,33 @@ export default function Screen03Preferences({
           </div>
         </section>
 
-        <section className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-text-primary">Typical Budget</p>
-            <span className="text-sm font-semibold text-text-primary">
-              {currency} {budget === 500 ? "500+" : budget}
-            </span>
+        {/* CHANGE 3: Budget slider card */}
+        <div className="bg-white rounded-3xl p-6 border border-[#EBEBEB] shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h3 className="font-bold text-[#222222] text-[17px]">Typical Budget</h3>
+              <p className="text-sm text-[#555555]">Per night out</p>
+            </div>
+            <span className="text-2xl font-bold text-[#FF5A5F]">K{budget}</span>
           </div>
-          <p className="text-xs text-text-secondary">Per night out</p>
           <input
             type="range"
-            min={25}
-            max={500}
-            step={5}
+            min="50"
+            max="1000"
+            step="50"
             value={budget}
-            onChange={(event) => setBudget(Number(event.target.value))}
-            className="w-full accent-[#FF5A5F]"
+            onChange={(e) => setBudget(Number(e.target.value))}
+            className="w-full accent-[#FF5A5F] h-2 bg-[#EBEBEB] rounded-lg appearance-none cursor-pointer"
           />
-        </section>
+          <div className="flex justify-between text-xs text-[#999999] font-medium mt-3">
+            <span>K50</span>
+            <span>K1000+</span>
+          </div>
+        </div>
 
-        <section className="space-y-3">
-          <p className="text-sm font-semibold text-text-primary">I usually go out with</p>
+        {/* CHANGE 2: Group size section */}
+        <section>
+          <h3 className="font-bold text-[#222222] text-[17px] mb-3">Group Size</h3>
           <div className="flex flex-wrap gap-2">
             {groupOptions.map((option) => (
               <VibePill
@@ -143,15 +153,18 @@ export default function Screen03Preferences({
             ))}
           </div>
         </section>
+
       </div>
 
-      <div className="sticky bottom-0 left-0 right-0 mx-auto w-full max-w-3xl rounded-t-3xl bg-[#F7F7F7] px-6 py-4">
-        <PrimaryButton
-          label="Continue →"
-          onPress={handleContinue}
-          disabled={!selectedVibes.length}
-          loading={saving}
-        />
+      {/* CHANGE 4: Fixed continue button */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white p-6 pb-8 border-t border-[#EBEBEB] shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-30">
+        <button
+          onClick={handleSubmit}
+          disabled={loading || !selectedVibes.length}
+          className="w-full bg-[#FF5A5F] text-white py-[18px] rounded-xl font-bold text-[17px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.5)] active:scale-[0.98] transition-all disabled:opacity-60"
+        >
+          {loading ? "Saving..." : "Continue →"}
+        </button>
       </div>
     </div>
   );
