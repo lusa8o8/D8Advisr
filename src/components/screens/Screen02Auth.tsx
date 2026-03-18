@@ -24,6 +24,7 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -53,8 +54,10 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
       if (error) {
         if (error.message?.toLowerCase().includes("already registered")) {
           toast.error("Account already exists. Please sign in instead.");
+          setAuthError("An account with this email already exists. Please sign in.");
         } else {
           toast.error(error.message);
+          setAuthError(error.message);
         }
         return;
       }
@@ -104,6 +107,7 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
               {...register("email")}
               type="email"
               placeholder="name@example.com"
+              onChange={() => setAuthError(null)}
               className="w-full px-4 py-3.5 rounded-xl border border-[#EBEBEB] bg-[#F7F7F7] focus:bg-white focus:outline-none focus:border-[#FF5A5F] focus:ring-1 focus:ring-[#FF5A5F] transition-all text-[#222222] placeholder:text-gray-400"
             />
             {errors.email && (
@@ -118,6 +122,7 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
                 {...register("password")}
                 type={showPassword ? "text" : "password"}
                 placeholder="Create a password"
+                onChange={() => setAuthError(null)}
                 className="w-full px-4 py-3.5 pr-16 rounded-xl border border-[#EBEBEB] bg-[#F7F7F7] focus:bg-white focus:outline-none focus:border-[#FF5A5F] focus:ring-1 focus:ring-[#FF5A5F] transition-all text-[#222222] placeholder:text-gray-400"
               />
               <button
@@ -133,6 +138,12 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
               <p className="text-xs text-red-500">{errors.password.message}</p>
             )}
           </div>
+
+          {authError && (
+            <div className="bg-[#FFF0F1] border border-[#FF5A5F]/20 rounded-xl px-4 py-3 text-sm font-medium text-[#FF5A5F]">
+              {authError}
+            </div>
+          )}
 
           {/* CHANGE 7: Sign Up button style */}
           <button
