@@ -239,7 +239,7 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
           type="button"
           onClick={handleGenerate}
           disabled={!canGenerate}
-          className="mt-4 flex items-center justify-center rounded-2xl bg-[#FF5A5F] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          className="mt-4 flex items-center justify-center rounded-2xl bg-[#FF5A5F] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60 active:scale-[0.98] transition-all"
         >
           {isLoading ? "🤔 Finding the perfect plan..." : "Generate My Plan ✨"}
         </button>

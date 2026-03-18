@@ -14,8 +14,8 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-text-primary">
-      <div className="pb-32">{children}</div>
+    <div className="relative min-h-screen bg-background text-text-primary overflow-x-hidden">
+      <div className="pb-24">{children}</div>
       <BottomNav />
     </div>
   );

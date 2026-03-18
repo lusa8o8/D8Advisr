@@ -207,7 +207,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
   const hasVenues = displayVenues.length > 0;
 
   return (
-    <section className="flex min-h-screen w-full flex-col bg-[#F7F7F7] pb-32">
+    <section className="flex min-h-screen w-full flex-col bg-[#F7F7F7] pb-32 no-scrollbar">
       <TopBar />
       <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 px-4 pt-4">
 

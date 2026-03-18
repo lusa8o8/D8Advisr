@@ -131,7 +131,7 @@ export default function Screen09PlanOverview({
                 setIsUpdating(false);
               }
             }}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#00C851] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#00C851] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60 active:scale-[0.98] transition-all"
             disabled={isUpdating}
           >
             <Check size={16} />
