@@ -3,16 +3,35 @@
 import { useRouter } from "next/navigation";
 import { Search, Star } from "lucide-react";
 
-const MAP_PINS = [
-  { id: 1, name: "Latitude 15°", emoji: "🍷", top: "35%", left: "45%", rating: 4.8 },
-  { id: 2, name: "The Eatery", emoji: "🍽️", top: "55%", left: "25%", rating: 4.6 },
-  { id: 3, name: "Rhapsody's", emoji: "🍸", top: "25%", left: "65%", rating: 4.5 },
-  { id: 4, name: "O'Hagans", emoji: "🎵", top: "65%", left: "55%", rating: 4.3 },
-  { id: 5, name: "Lusaka Museum", emoji: "🏛️", top: "45%", left: "70%", rating: 4.7 },
+const PIN_POSITIONS = [
+  { top: "35%", left: "45%" },
+  { top: "55%", left: "25%" },
+  { top: "25%", left: "65%" },
+  { top: "65%", left: "55%" },
+  { top: "45%", left: "70%" },
 ];
 
-export default function Screen05Map() {
+function categoryEmoji(category: string) {
+  switch (category) {
+    case "restaurant": return "🍽️";
+    case "bar": return "🍸";
+    case "activity": return "🏛️";
+    default: return "📍";
+  }
+}
+
+type MapVenue = { id: string; name: string; category: string };
+
+export default function Screen05Map({ venues }: { venues: MapVenue[] }) {
   const router = useRouter();
+
+  const pins = venues.slice(0, 5).map((venue, i) => ({
+    ...venue,
+    emoji: categoryEmoji(venue.category),
+    ...PIN_POSITIONS[i],
+  }));
+
+  const featured = pins[0];
 
   return (
     <div className="flex-1 min-h-screen flex flex-col relative bg-[#E5E2DA] overflow-hidden pb-24">
@@ -69,7 +88,7 @@ export default function Screen05Map() {
       </div>
 
       {/* VENUE PINS */}
-      {MAP_PINS.map((pin) => (
+      {pins.map((pin) => (
         <div
           key={pin.id}
           onClick={() => router.push(`/venues/${pin.id}`)}
@@ -87,26 +106,28 @@ export default function Screen05Map() {
       ))}
 
       {/* SELECTED VENUE BOTTOM SHEET */}
-      <div
-        onClick={() => router.push("/venues/1")}
-        className="absolute bottom-28 w-full px-6 z-20"
-      >
-        <div className="bg-white rounded-3xl p-4 shadow-xl border border-[#EBEBEB] flex items-center gap-4 cursor-pointer">
-          <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-red-500 rounded-2xl flex items-center justify-center text-2xl shadow-inner shrink-0">
-            🍷
-          </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-[16px] text-[#222222] leading-tight mb-1">Latitude 15°</h3>
-            <div className="flex items-center gap-1 text-xs text-[#555555] mb-1.5">
-              <Star size={12} className="fill-[#FF9500] text-[#FF9500]" />
-              <span className="font-bold text-[#222222]">4.8</span>
-              <span className="mx-1">•</span>
-              <span className="text-[#FF5A5F] font-bold">$$</span>
+      {featured && (
+        <div
+          onClick={() => router.push(`/venues/${featured.id}`)}
+          className="absolute bottom-28 w-full px-6 z-20"
+        >
+          <div className="bg-white rounded-3xl p-4 shadow-xl border border-[#EBEBEB] flex items-center gap-4 cursor-pointer">
+            <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-red-500 rounded-2xl flex items-center justify-center text-2xl shadow-inner shrink-0">
+              {featured.emoji}
             </div>
-            <p className="text-xs text-[#555555]">Romantic Dining • Bishops Road</p>
+            <div className="flex-1">
+              <h3 className="font-bold text-[16px] text-[#222222] leading-tight mb-1">{featured.name}</h3>
+              <div className="flex items-center gap-1 text-xs text-[#555555] mb-1.5">
+                <Star size={12} className="fill-[#FF9500] text-[#FF9500]" />
+                <span className="font-bold text-[#222222]">4.8</span>
+                <span className="mx-1">•</span>
+                <span className="text-[#FF5A5F] font-bold">$$</span>
+              </div>
+              <p className="text-xs text-[#555555] capitalize">{featured.category} • Lusaka</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
