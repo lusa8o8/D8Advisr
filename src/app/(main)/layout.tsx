@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { BottomNav } from "@/components/layout/BottomNav";
+import BottomNav from "@/components/layout/BottomNav";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function MainLayout({ children }: { children: ReactNode }) {

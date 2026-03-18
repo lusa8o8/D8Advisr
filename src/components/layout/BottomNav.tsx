@@ -1,46 +1,55 @@
-﻿"use client"
-
+"use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, House, User } from "lucide-react";
+import { Home, Calendar, User } from "lucide-react";
 
-const tabs = [
-  { label: "Home", href: "/home", icon: House },
-  { label: "Plans", href: "/plans", icon: CalendarDays },
-  { label: "Profile", href: "/profile", icon: User },
-];
-
-export function BottomNav() {
-  const pathname = usePathname() ?? "";
+export default function BottomNav() {
+  const pathname = usePathname();
+  const active = pathname.startsWith("/home")
+    ? "home"
+    : pathname.startsWith("/plans")
+    ? "plans"
+    : pathname.startsWith("/profile")
+    ? "profile"
+    : "";
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 border-t border-[#E5E5E5] bg-white/95 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
-      <div
-        className="mx-auto flex max-w-3xl items-center justify-between px-6 py-3"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#EBEBEB] pb-8 pt-4 px-8 flex justify-between items-center z-20 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
+      <Link
+        href="/home"
+        className={`flex flex-col items-center gap-1.5 transition-colors ${
+          active === "home" ? "text-[#FF5A5F]" : "text-[#999999] hover:text-[#555555]"
+        }`}
       >
-        {tabs.map((tab) => {
-          const isActive =
-            pathname === tab.href || pathname.startsWith(`${tab.href}/`);
-          const Icon = tab.icon;
+        <Home size={24} strokeWidth={active === "home" ? 2.5 : 2} />
+        <span className={`text-[10px] ${active === "home" ? "font-bold" : "font-medium"}`}>
+          Home
+        </span>
+      </Link>
 
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className="flex flex-col items-center gap-1 text-xs font-semibold text-[#888888]"
-            >
-              <Icon
-                size={22}
-                className={isActive ? "text-[#FF5A5F]" : "text-[#888888]"}
-              />
-              <span className={isActive ? "text-[#FF5A5F]" : "text-[#888888]"}>
-                {tab.label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+      <Link
+        href="/plans"
+        className={`flex flex-col items-center gap-1.5 transition-colors ${
+          active === "plans" ? "text-[#FF5A5F]" : "text-[#999999] hover:text-[#555555]"
+        }`}
+      >
+        <Calendar size={24} strokeWidth={active === "plans" ? 2.5 : 2} />
+        <span className={`text-[10px] ${active === "plans" ? "font-bold" : "font-medium"}`}>
+          Plans
+        </span>
+      </Link>
+
+      <Link
+        href="/profile"
+        className={`flex flex-col items-center gap-1.5 transition-colors ${
+          active === "profile" ? "text-[#FF5A5F]" : "text-[#999999] hover:text-[#555555]"
+        }`}
+      >
+        <User size={24} strokeWidth={active === "profile" ? 2.5 : 2} />
+        <span className={`text-[10px] ${active === "profile" ? "font-bold" : "font-medium"}`}>
+          Profile
+        </span>
+      </Link>
+    </div>
   );
 }
