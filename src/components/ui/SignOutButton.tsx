@@ -18,7 +18,7 @@ export default function SignOutButton() {
     <button
       type="button"
       onClick={handleSignOut}
-      className="flex items-center justify-between rounded-2xl border border-[#888888] px-4 py-3 text-sm font-semibold text-[#888888]"
+      className="w-full text-[#999999] font-medium text-sm py-4 text-center"
     >
       Sign Out
     </button>

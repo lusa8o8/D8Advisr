@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/ui/SignOutButton";
-import { ChevronRight, DollarSign, Heart } from "lucide-react";
+import { ChevronRight, Heart } from "lucide-react";
 
 type RecentPlan = {
   id: string;
@@ -14,9 +14,15 @@ type RecentPlan = {
   rating?: number | null;
 };
 
-type ProfilePageProps = {};
+function occasionEmoji(occasion: string | null): { emoji: string; bg: string } {
+  const o = occasion?.toLowerCase() ?? "";
+  if (o.includes("anniversary")) return { emoji: "💍", bg: "bg-[#FFF0F1]" };
+  if (o.includes("first date") || o.includes("date night")) return { emoji: "🍷", bg: "bg-[#FFF0F1]" };
+  if (o.includes("night out")) return { emoji: "🎉", bg: "bg-[#F0F8FF]" };
+  return { emoji: "🎉", bg: "bg-[#F0F8FF]" };
+}
 
-export default async function ProfilePage({}: ProfilePageProps) {
+export default async function ProfilePage() {
   const supabase = createSupabaseServerClient();
   const {
     data: { user },
@@ -75,17 +81,20 @@ export default async function ProfilePage({}: ProfilePageProps) {
       })
     : null;
 
+  const initials = profile?.name
+    ?.split(" ")
+    .map((chunk: string) => chunk[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div className="min-h-screen bg-[#F7F7F7] pb-32">
-      <div className="overflow-hidden rounded-b-3xl bg-[#FF5A5F] px-6 pb-8 pt-10 text-white">
+      {/* CHANGE 1: Header with pb-20 to allow card overlap */}
+      <div className="overflow-hidden rounded-b-3xl bg-[#FF5A5F] px-6 pb-20 pt-10 text-white">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-bold text-[#FF5A5F]">
-            {profile?.name
-              ?.split(" ")
-              .map((chunk: string) => chunk[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase()}
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-xl font-bold text-[#FF5A5F] shadow-lg">
+            {initials}
           </div>
           <div>
             <p className="text-xl font-bold">{profile?.name ?? "Guest"}</p>
@@ -96,88 +105,97 @@ export default async function ProfilePage({}: ProfilePageProps) {
         </div>
       </div>
 
-      <div className="-mt-6 mx-auto flex max-w-xl flex-col gap-4 px-4">
-        <div className="grid gap-3 sm:grid-cols-3">
-          {[
-            { label: "Plans Created", value: totalPlans },
-            { label: "Dates Done", value: completedPlans },
-            { label: "Budget Saved", value: 0, suffix: "K" },
-          ].map((item) => (
-            <div key={item.label} className="rounded-2xl border border-[#E5A5E5] bg-white p-4 text-center">
-              <p className="text-2xl font-bold text-[#FF5A5F]">
-                {item.suffix ?? ""}
-                {item.value}
-              </p>
-              <p className="text-xs text-[#555555]">{item.label}</p>
+      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4">
+        {/* CHANGE 1: Profile stats card with -mt-16 overlap */}
+        {/* CHANGE 2 + 3: Stats colors and border separators */}
+        <div className="-mt-16 relative z-10 bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-[#EBEBEB] p-6">
+          <div className="w-full grid grid-cols-3 gap-2 border-t border-[#EBEBEB] pt-5">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-[#222222]">{totalPlans}</p>
+              <p className="text-xs text-[#555555] mt-1">Plans Created</p>
             </div>
-          ))}
+            <div className="text-center border-l border-r border-[#EBEBEB]">
+              <p className="text-2xl font-bold text-[#222222]">{completedPlans}</p>
+              <p className="text-xs text-[#555555] mt-1">Dates Done</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-[#00C851]">K0</p>
+              <p className="text-xs text-[#555555] mt-1">Budget Saved</p>
+            </div>
+          </div>
         </div>
 
-        <section className="rounded-2xl border border-[#E5A5E5] bg-white p-4">
-          <header className="flex items-center justify-between">
+        {/* CHANGE 4: Recent plans with emoji icon */}
+        <section className="rounded-2xl border border-[#EBEBEB] bg-white p-4 shadow-sm">
+          <header className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-[#222222]">Recent Plans</p>
             <Link href="/plans" className="text-xs font-semibold text-[#FF5A5F]">
               View all
             </Link>
           </header>
-          <div className="mt-3 space-y-3">
-            {recentPlans.map((plan) => (
-              <Link
-                key={plan.id}
-                href={`/plans/${plan.id}`}
-                className="flex items-center justify-between rounded-2xl border border-[#E5A5E5] px-4 py-3 text-sm text-[#222222] transition hover:border-[#FF5A5F]"
-              >
-                <div>
-                  <p className="font-semibold">{plan.title}</p>
-                  <p className="text-xs text-[#555555]">
-                    {new Date(plan.created_at).toLocaleString("en-US", { month: "short", day: "numeric" })}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-[#FF5A5F]">K{plan.estimated_cost.toFixed(0)}</p>
-                  {plan.rating ? (
-                    <span className="text-xs font-semibold text-[#FF9500]">⭐ {plan.rating.toFixed(1)}</span>
-                  ) : (
-                    plan.occasion && (
-                      <span className="rounded-full bg-[#F7F7F7] px-3 py-1 text-xs font-semibold text-[#555555]">
-                        {plan.occasion}
-                      </span>
-                    )
-                  )}
-                </div>
-              </Link>
-            ))}
+          <div className="space-y-3">
+            {recentPlans.map((plan) => {
+              const { emoji, bg } = occasionEmoji(plan.occasion);
+              return (
+                <Link
+                  key={plan.id}
+                  href={`/plans/${plan.id}`}
+                  className="bg-white p-4 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#EBEBEB] flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center text-2xl shrink-0`}>
+                      {emoji}
+                    </div>
+                    <div>
+                      <p className="font-bold text-[#222222] text-sm">{plan.title}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {plan.rating ? (
+                          <span className="text-xs font-semibold text-[#FF9500]">⭐ {plan.rating.toFixed(1)}</span>
+                        ) : null}
+                        <span className="text-xs text-[#555555]">
+                          {new Date(plan.created_at).toLocaleString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} className="text-[#999999] shrink-0" />
+                </Link>
+              );
+            })}
             {!recentPlans.length && <p className="text-xs text-[#888888]">No recent plans</p>}
           </div>
         </section>
 
-        <section className="space-y-3">
-          <Link
-            href="/budget"
-            className="flex items-center justify-between rounded-2xl border border-[#E5A5E5] bg-white px-4 py-3 text-sm font-semibold text-[#222222]"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00C851] text-sm font-bold text-white">
-                <DollarSign size={16} />
-              </span>
-              <p>Budget &amp; Sinking Fund</p>
-            </div>
-            <ChevronRight size={16} className="text-[#555555]" />
-          </Link>
+        {/* CHANGE 5: Merged menu card */}
+        <div className="bg-white rounded-3xl p-2 shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#EBEBEB]">
           <Link
             href="/profile/preferences"
-            className="flex items-center justify-between rounded-2xl border border-[#E5A5E5] bg-white px-4 py-3 text-sm font-semibold text-[#222222]"
+            className="w-full flex items-center justify-between p-4 border-b border-[#F7F7F7]"
           >
-            <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FF5A5F] text-sm font-bold text-white">
+            <div className="flex items-center gap-3 text-[#222222]">
+              <div className="w-8 h-8 rounded-full bg-[#F7F7F7] flex items-center justify-center text-[#555555]">
                 <Heart size={16} />
-              </span>
-              <p>My Preferences</p>
+              </div>
+              <span className="font-semibold text-[15px]">My Preferences</span>
             </div>
-            <ChevronRight size={16} className="text-[#555555]" />
+            <ChevronRight size={18} className="text-[#999999]" />
           </Link>
-          <SignOutButton />
-        </section>
+          <Link
+            href="/budget"
+            className="w-full flex items-center justify-between p-4"
+          >
+            <div className="flex items-center gap-3 text-[#222222]">
+              <div className="w-8 h-8 rounded-full bg-[#F7F7F7] flex items-center justify-center text-[#00C851]">
+                <span className="font-bold text-sm">$</span>
+              </div>
+              <span className="font-semibold text-[15px]">Budget &amp; Sinking Fund</span>
+            </div>
+            <ChevronRight size={18} className="text-[#999999]" />
+          </Link>
+        </div>
+
+        {/* CHANGE 6: Subtle sign out */}
+        <SignOutButton />
       </div>
     </div>
   );
