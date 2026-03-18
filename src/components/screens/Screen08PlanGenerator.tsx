@@ -56,7 +56,7 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
     };
   }, [isLoading]);
 
-  const canGenerate = useMemo(() => budget > 0 && (!isLoading), [budget, isLoading]);
+  const canGenerate = useMemo(() => budget > 0 && !isLoading, [budget, isLoading]);
 
   const toggleOccasion = (value: string) => {
     setOccasionSelection((prev) =>
@@ -71,9 +71,7 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
   };
 
   const handleGenerate = async () => {
-    if (!canGenerate) {
-      return;
-    }
+    if (!canGenerate) return;
 
     setIsLoading(true);
     try {
@@ -106,38 +104,49 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
 
   return (
     <div className="min-h-screen bg-[#F7F7F7] pb-32">
-      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
+      {/* CHANGE 4: Sticky white header with Sparkles */}
+      <div className="px-6 pt-14 pb-8 bg-white shadow-sm rounded-b-3xl sticky top-0 z-10">
         <button
           type="button"
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#555555]"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#555555] mb-6"
         >
           <ArrowLeft size={16} />
           Back
         </button>
-
-        <div>
-          <h1 className="text-3xl font-bold text-[#222222]">Build Your Plan</h1>
-          <p className="text-sm text-[#555555]">Tell us what you're looking for</p>
+        <div className="flex items-center gap-2 mb-6">
+          <Sparkles className="text-[#FF5A5F]" size={28} />
+          <h1 className="text-[28px] font-bold text-[#222222]">Build Your Plan</h1>
         </div>
 
-        <div className="flex gap-3">
-          {["date", "group"].map((type) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => setPlanType(type as "date" | "group")}
-              className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold ${
-                planType === type
-                  ? "bg-[#FF5A5F] text-white"
-                  : "border border-[#E5E5E5] text-[#555555]"
-              }`}
-            >
-              {type === "date" ? "Solo / Date" : "Group"}
-            </button>
-          ))}
+        {/* CHANGE 5: Toggle pill style */}
+        <div className="bg-[#F7F7F7] p-1 rounded-xl flex mb-6">
+          <button
+            type="button"
+            onClick={() => setPlanType("date")}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              planType === "date"
+                ? "bg-white shadow-sm text-[#222222]"
+                : "text-[#555555]"
+            }`}
+          >
+            Solo / Date
+          </button>
+          <button
+            type="button"
+            onClick={() => setPlanType("group")}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              planType === "group"
+                ? "bg-white shadow-sm text-[#222222]"
+                : "text-[#555555]"
+            }`}
+          >
+            Group
+          </button>
         </div>
+      </div>
 
+      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
         <div className="space-y-2 rounded-2xl border border-[#E5E5E5] bg-white p-4">
           <p className="text-sm font-semibold text-[#222222]">Occasion</p>
           <div className="flex flex-wrap gap-2">
