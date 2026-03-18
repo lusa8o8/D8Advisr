@@ -1,8 +1,8 @@
-﻿"use client"
+"use client"
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, ChevronLeft } from "lucide-react";
+import { BadgeCheck, ChevronLeft, Edit3, Map } from "lucide-react";
 import { toast } from "sonner";
 import type { Plan, PlanItem } from "@/types/database";
 
@@ -64,65 +64,46 @@ export default function Screen10PlanDetail({ plan, stops }: { plan: Plan; stops:
   };
 
   const renderActions = () => {
-    if (plan.status === "draft" || plan.status === "saved") {
+    if (plan.status === "completed") {
       return (
-        <div className="flex flex-col gap-3">
+        <>
           <button
             type="button"
-            className="rounded-xl bg-[#FF5A5F] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
-            disabled={isUpdating}
-            onClick={() => updateStatus("active", `/plans/${plan.id}/execute`)}
+            className="flex-1 rounded-xl border-2 border-[#EBEBEB] py-4 text-sm font-bold text-[#222222]"
+            onClick={() => router.push(`/plans/${plan.id}/feedback`)}
           >
-            Start Experience
+            View Feedback
           </button>
           <button
             type="button"
-            className="rounded-xl border border-[#FF5A5F] px-4 py-3 text-sm font-semibold text-[#FF5A5F]"
-            onClick={() => router.push(`/plans/${plan.id}/edit`)}
+            className="flex-1 bg-[#FF5A5F] text-white rounded-xl font-bold text-[17px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.5)] active:scale-[0.98] transition-all"
+            onClick={() => router.push("/plans/generate")}
           >
-            Edit Plan
+            Plan Again
           </button>
-        </div>
+        </>
       );
     }
-    if (plan.status === "active") {
-      return (
-        <div className="flex flex-col gap-3">
-          <button
-            type="button"
-            className="rounded-xl bg-[#00C851] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
-            disabled={isUpdating}
-            onClick={() => updateStatus("completed", `/plans/${plan.id}/feedback`)}
-          >
-            I'm Done!
-          </button>
-          <button
-            type="button"
-            className="rounded-xl border border-[#FF5A5F] px-4 py-3 text-sm font-semibold text-[#FF5A5F]"
-            onClick={() => router.push(`/plans/${plan.id}/edit`)}
-          >
-            Edit Plan
-          </button>
-        </div>
-      );
-    }
+
+    // draft, saved, active
     return (
-      <div className="flex flex-col gap-3">
+      <>
         <button
           type="button"
-          className="rounded-xl border border-[#222222] px-4 py-3 text-sm font-semibold text-[#222222]"
-          onClick={() => router.push(`/plans/${plan.id}/feedback`)}
+          className="w-14 h-14 rounded-xl border-2 border-[#EBEBEB] flex items-center justify-center shrink-0"
+          onClick={() => router.push(`/plans/${plan.id}/execute`)}
         >
-          View Feedback
+          <Map size={24} />
         </button>
         <button
           type="button"
-          className="rounded-xl border border-[#FF5A5F] px-4 py-3 text-sm font-semibold text-[#FF5A5F]"
-          onClick={() => router.push(`/plans/generate`)}
+          className="flex-1 bg-[#FF5A5F] text-white rounded-xl font-bold text-[17px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.5)] active:scale-[0.98] transition-all disabled:opacity-60"
+          disabled={isUpdating}
+          onClick={() => updateStatus("active", `/plans/${plan.id}/execute`)}
         >
-          Regenerate Similar
+          Let's Go!
         </button>
-      </div>
+      </>
     );
   };
 
@@ -145,17 +126,28 @@ export default function Screen10PlanDetail({ plan, stops }: { plan: Plan; stops:
           </div>
         )}
         <section className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-[#222222]">Your Itinerary</p>
-          <div className="mt-4 space-y-3">
+          {/* CHANGE 4: Edit Plan inline with itinerary header */}
+          <div className="flex justify-between items-center">
+            <p className="text-sm font-semibold text-[#222222]">Your Itinerary</p>
+            <button
+              onClick={() => router.push(`/plans/${plan.id}/edit`)}
+              className="text-[#FF5A5F] font-semibold text-sm flex items-center gap-1"
+            >
+              <Edit3 size={14} /> Edit Plan
+            </button>
+          </div>
+          {/* CHANGE 3: Timeline connecting line */}
+          <div className="mt-4 space-y-3 relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[#EBEBEB] before:content-['']">
             {stops.map((stop, index) => (
               <button
                 key={stop.id}
                 type="button"
                 onClick={() => router.push(`/venues/${stop.venue_id}`)}
-                className="flex items-center justify-between rounded-2xl border border-[#E5E5E5] bg-[#F9F9F9] p-3 text-left transition hover:border-[#FF5A5F]"
+                className="relative z-10 flex items-center justify-between rounded-2xl border border-[#E5E5E5] bg-[#F9F9F9] p-3 text-left transition hover:border-[#FF5A5F] w-full"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FF5A5F]/20 text-sm font-bold text-[#FF5A5F]">
+                  {/* CHANGE 2: Dark stop number circles */}
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#222222] text-sm font-bold text-white shrink-0">
                     {index + 1}
                   </div>
                   <div>
@@ -189,10 +181,10 @@ export default function Screen10PlanDetail({ plan, stops }: { plan: Plan; stops:
           </div>
         </section>
       </div>
-      <div className="fixed bottom-0 left-0 right-0 border-t border-[#E5E5E5] bg-white px-4 py-4 pb-20">
+      {/* CHANGE 1: New bottom action bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#EBEBEB] p-6 flex gap-4 z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
         {renderActions()}
       </div>
     </div>
   );
 }
-
