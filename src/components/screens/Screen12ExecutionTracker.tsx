@@ -1,8 +1,8 @@
-﻿"use client"
+"use client"
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, Phone, Share } from "lucide-react";
 import type { Plan, PlanItem } from "@/types/database";
 
 type ExecutionStop = PlanItem & {
@@ -25,7 +25,8 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
   const currentStop = stops[currentIndex];
   const totalStops = stops.length;
 
-  const progressSteps = useMemo(
+  // kept for potential future use
+  const _progressSteps = useMemo(
     () => stops.map((stop, index) => ({
       label: stop.venue_name,
       status: index < currentIndex ? "completed" : index === currentIndex ? "current" : "pending",
@@ -53,61 +54,125 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
   }
 
   return (
-    <div className="min-h-screen bg-[#222222] pb-32 text-white">
-      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
-        <header className="space-y-1">
-          <p className="text-sm text-white/70">You're on your date!</p>
-          <h1 className="text-3xl font-bold text-[#FF5A5F]">{plan.title}</h1>
-        </header>
-
-        <div className="flex items-center gap-2">
-          {progressSteps.map((step, index) => (
-            <div
-              key={step.label}
-              className={`flex h-10 w-10 items-center justify-center rounded-full border ${
-                step.status === "completed"
-                  ? "border-[#00C851] bg-[#00C851]"
-                  : step.status === "current"
-                  ? "border-[#FF5A5F]"
-                  : "border-white/30"
-              }`}
-            >
-              {index + 1}
-            </div>
-          ))}
-        </div>
-
-        <section className="rounded-2xl bg-white p-4 text-[#222222] shadow-lg">
-          <p className="text-xs text-[#555]">{currentIndex === 0 ? "1st Stop" : currentIndex === 1 ? "2nd Stop" : currentIndex === 2 ? "3rd Stop" : `Stop ${currentIndex + 1}`}</p>
-          <h2 className="text-xl font-bold">{currentStop.venue_name}</h2>
-          <p className="text-sm text-[#555]">{currentStop.activity_type}</p>
-          <p className="text-sm text-[#555]">{currentStop.time_slot}</p>
-          <p className="text-xs text-[#888]">{currentStop.venue?.address}</p>
-          <div className="mt-4 flex gap-3">
-            <button
-              type="button"
-              onClick={goToMaps}
-              className="flex-1 rounded-xl border border-[#FF5A5F] px-4 py-3 text-sm font-semibold text-[#FF5A5F]"
-            >
-              Directions
-            </button>
-            <button
-              type="button"
-              onClick={markComplete}
-              className="flex-1 rounded-xl bg-[#00C851] px-4 py-3 text-sm font-semibold text-white"
-            >
-              Mark Complete
-            </button>
+    <div className="min-h-screen bg-[#F7F7F7] pb-32">
+      {/* CHANGE 2: Sticky white header */}
+      <div className="bg-white px-6 pt-14 pb-6 shadow-sm sticky top-0 z-20 border-b border-[#EBEBEB]">
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={() => router.back()}
+            className="w-10 h-10 bg-[#F7F7F7] rounded-full flex items-center justify-center text-[#222222]"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div className="text-sm font-bold text-[#555555] tracking-wider uppercase">
+            Stop {currentIndex + 1} of {totalStops}
           </div>
-        </section>
+          <div className="w-10"></div>
+        </div>
+        <h1 className="text-[28px] font-bold text-[#222222] leading-tight">
+          You're on your date! 🗺️
+        </h1>
       </div>
 
+      {/* CHANGE 3: Progress tracker with connecting line */}
+      <div className="flex justify-between items-center mb-8 relative px-6 pt-6">
+        <div className="absolute top-[50%] left-10 right-10 h-1 bg-[#EBEBEB] -translate-y-1/2 z-0"></div>
+        <div
+          className="absolute top-[50%] left-10 h-1 bg-[#00C851] -translate-y-1/2 z-0 transition-all"
+          style={{ width: currentIndex > 0 ? "50%" : "0%" }}
+        ></div>
+        {stops.map((stop, index) => (
+          <div
+            key={stop.id}
+            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold relative z-10 shadow-md
+              ${index < currentIndex
+                ? "bg-[#00C851] text-white"
+                : index === currentIndex
+                ? "bg-[#FF5A5F] text-white shadow-[0_0_0_4px_rgba(255,90,95,0.2)]"
+                : "bg-white border-2 border-[#EBEBEB] text-[#999999]"
+              }`}
+          >
+            {index < currentIndex ? <Check size={20} strokeWidth={3} /> : index + 1}
+          </div>
+        ))}
+      </div>
+
+      {/* CHANGE 4: Current stop card — light theme */}
+      <div className="bg-white rounded-3xl p-6 shadow-lg border border-[#EBEBEB] mx-6 mb-6">
+        <div className="bg-[#FFF0F1] text-[#FF5A5F] w-max px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-[#FF5A5F]/10 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#FF5A5F] animate-pulse"></span>
+          IN PROGRESS
+        </div>
+        <h2 className="text-2xl font-bold text-[#222222]">{currentStop.venue_name}</h2>
+        <p className="text-[#555555] text-sm mt-1">{currentStop.activity_type}</p>
+        <p className="text-[#555555] text-sm">{currentStop.time_slot}</p>
+        {currentStop.venue?.address && (
+          <p className="text-xs text-[#888888] mt-1">{currentStop.venue.address}</p>
+        )}
+        <div className="mt-4 flex gap-3">
+          <button
+            type="button"
+            onClick={goToMaps}
+            className="flex-1 rounded-xl border-2 border-[#FF5A5F] px-4 py-3 text-sm font-semibold text-[#FF5A5F] flex items-center justify-center gap-2"
+          >
+            🗺️ Directions
+          </button>
+          <button
+            type="button"
+            onClick={markComplete}
+            className="flex-1 rounded-xl bg-[#00C851] px-4 py-3 text-sm font-semibold text-white"
+          >
+            Mark Complete
+          </button>
+        </div>
+      </div>
+
+      {/* CHANGE 5: Up Next preview */}
+      {currentIndex + 1 < totalStops && (
+        <div className="mx-6 bg-[#F7F7F7] rounded-2xl p-5 border border-dashed border-[#EBEBEB] flex items-center justify-between opacity-80">
+          <div>
+            <p className="text-xs font-bold text-[#999999] uppercase tracking-wider mb-1">Up Next</p>
+            <h3 className="font-bold text-[#222222]">{stops[currentIndex + 1].venue_name}</h3>
+            <p className="text-sm text-[#555555]">{stops[currentIndex + 1].time_slot}</p>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-lg">
+            →
+          </div>
+        </div>
+      )}
+
+      {/* CHANGE 6: Fixed footer quick actions */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#EBEBEB] p-4 pb-8 z-20">
+        <div className="flex justify-around px-2">
+          <button className="flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-full bg-[#F7F7F7] border border-[#EBEBEB] flex items-center justify-center text-[#222222]">
+              <Phone size={22} />
+            </div>
+            <span className="text-[11px] font-semibold text-[#555555]">Call Venue</span>
+          </button>
+          <button className="flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-full bg-[#F7F7F7] border border-[#EBEBEB] flex items-center justify-center text-[#222222]">
+              <Share size={22} />
+            </div>
+            <span className="text-[11px] font-semibold text-[#555555]">Share Live</span>
+          </button>
+          <button className="flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-full bg-[#FFF3E8] border border-[#FF9500]/20 flex items-center justify-center text-[#FF9500]">
+              <AlertCircle size={22} />
+            </div>
+            <span className="text-[11px] font-semibold text-[#555555]">Get Help</span>
+          </button>
+        </div>
+      </div>
+
+      {/* CHANGE 7: Completion modal — light theme */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 p-4">
-          <div className="rounded-2xl bg-white p-6 text-center text-[#222222]">
-            <p className="text-2xl font-bold">You did it!</p>
-            <p className="mt-2 text-sm text-[#555]">How was your experience?</p>
-            <div className="mt-4 flex flex-col gap-3">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 p-4 z-50">
+          <div className="rounded-3xl bg-white p-8 text-center text-[#222222] shadow-2xl w-full max-w-sm">
+            <p className="text-4xl mb-4">🎉</p>
+            <p className="text-2xl font-bold text-[#222222] mb-2">You did it!</p>
+            <p className="text-sm text-[#555555] mb-6">How was your experience?</p>
+            <div className="flex flex-col gap-3">
               <button
                 type="button"
                 onClick={() => router.push(`/plans/${plan.id}/feedback`)}
@@ -118,7 +183,7 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
               <button
                 type="button"
                 onClick={() => router.push("/plans")}
-                className="rounded-xl border border-[#888] px-4 py-3 text-sm font-semibold text-[#888888]"
+                className="rounded-xl border border-[#EBEBEB] px-4 py-3 text-sm font-semibold text-[#888888]"
               >
                 Back to Plans
               </button>
@@ -129,6 +194,3 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
     </div>
   );
 }
-
-
-
