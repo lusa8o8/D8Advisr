@@ -234,7 +234,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
           </button>
         </div>
 
-        <div className="flex overflow-x-auto pb-3">
+        <div className="flex overflow-x-auto no-scrollbar pb-3">
           <div className="flex gap-2">
             {CATEGORY_OPTIONS.map((category) => (
               <CategoryPill
