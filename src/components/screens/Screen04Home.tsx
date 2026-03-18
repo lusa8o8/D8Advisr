@@ -318,15 +318,13 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
         onReset={handleResetFilters}
       />
 
-      <div className="fixed bottom-24 left-1/2 z-20 -translate-x-1/2">
-        <button
-          type="button"
-          onClick={() => router.push("/plans/generate")}
-          className="flex items-center justify-center rounded-[999px] bg-[#FF5A5F] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#FF5A5F]/40"
-        >
-          ✨ Surprise Me
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => router.push("/plans/generate")}
+        className="fixed bottom-28 right-6 bg-[#FF5A5F] text-white px-5 py-4 rounded-full font-bold text-sm shadow-[0_8px_25px_-6px_rgba(255,90,95,0.6)] flex items-center gap-2 active:scale-95 transition-transform z-30"
+      >
+        ✨ Surprise Me
+      </button>
     </section>
   );
 }
