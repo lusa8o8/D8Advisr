@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
   const authPaths = ["/", "/login", "/signup"];
   const isAuthPath = authPaths.includes(pathname);
 
-  const protectedPrefixes = ["/home", "/plans", "/profile", "/curator", "/budget", "/notifications", "/map"];
+  const protectedPrefixes = ["/home", "/plans", "/profile", "/curator", "/budget", "/notifications", "/map", "/badges"];
   const isProtectedPath = protectedPrefixes.some((prefix) =>
     pathname.startsWith(prefix)
   );

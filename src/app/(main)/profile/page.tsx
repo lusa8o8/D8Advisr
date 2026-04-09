@@ -125,6 +125,24 @@ export default async function ProfilePage() {
           </div>
         </div>
 
+        {/* Badges preview */}
+        <section className="rounded-2xl border border-[#EBEBEB] bg-white p-4 shadow-sm">
+          <header className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-[#222222]">Badges</p>
+            <Link href="/badges" className="text-xs font-semibold text-[#FF5A5F]">
+              View All
+            </Link>
+          </header>
+          <div className="flex gap-3">
+            {["🔥", "🍕", "💰"].map((emoji) => (
+              <div key={emoji} className="flex-1 flex flex-col items-center gap-1 bg-[#F7F7F7] rounded-xl py-3">
+                <span className="text-2xl">{emoji}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-[#888888] text-center mt-2">3 badges earned</p>
+        </section>
+
         {/* CHANGE 4: Recent plans with emoji icon */}
         <section className="rounded-2xl border border-[#EBEBEB] bg-white p-4 shadow-sm">
           <header className="flex items-center justify-between mb-3">
