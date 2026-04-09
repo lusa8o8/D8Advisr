@@ -23,12 +23,20 @@ export default async function BudgetPage() {
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const summary = await getBudgetSummary(supabase, user.id, month);
 
+  const { data: funds } = await (supabase as any)
+    .from("sinking_funds")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+
   return (
     <Screen16Budget
       initialMonth={month}
       initialBudget={summary.budget}
       initialSpent={summary.spent}
       initialPlans={summary.plans}
+      initialFunds={funds ?? []}
       preferences={{
         vibes: (preferences?.default_vibe ?? "").split(",").filter(Boolean),
         groupSize: preferences?.group_size_preference ?? 1,
