@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/ui/SignOutButton";
+import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import { ChevronRight, Heart } from "lucide-react";
 
 type RecentPlan = {
@@ -93,9 +94,7 @@ export default async function ProfilePage() {
       {/* CHANGE 1: Header with pb-20 to allow card overlap */}
       <div className="overflow-hidden rounded-b-3xl bg-[#FF5A5F] px-6 pb-20 pt-10 text-white">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-xl font-bold text-[#FF5A5F] shadow-lg">
-            {initials}
-          </div>
+          <ProfileAvatar initials={initials} />
           <div>
             <p className="text-xl font-bold">{profile?.name ?? "Guest"}</p>
             {memberSince && <p className="text-xs text-white/80">Member since {memberSince}</p>}
