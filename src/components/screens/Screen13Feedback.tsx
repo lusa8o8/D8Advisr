@@ -388,7 +388,7 @@ export default function Screen13Feedback({ plan, stops }: Screen13FeedbackProps)
       }
 
       toast.success("Thanks for your feedback! 🎉");
-      router.push("/plans");
+      router.push(`/plans/${plan.id}/review-complete`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Feedback failed");
     } finally {
