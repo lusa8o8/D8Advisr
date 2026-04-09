@@ -441,7 +441,7 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
         </button>
         <button
           className="flex-1 bg-[#FF5A5F] text-white rounded-xl font-bold text-[17px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.5)] active:scale-[0.98] transition-all"
-          onClick={() => router.push(`/plans/generate?venueId=${venue.id}`)}
+          onClick={() => router.push(`/plans/generate?venue_id=${venue.id}&venue_name=${encodeURIComponent(venue.name)}`)}
         >
           Add to Plan
         </button>
