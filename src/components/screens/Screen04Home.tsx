@@ -258,6 +258,36 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
           </div>
         </div>
 
+        {/* Experiences Near You */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between px-6 mb-3">
+            <h2 className="font-bold text-[17px] text-[#222222]">Experiences Near You</h2>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar px-6 snap-x pb-1">
+            {[
+              { name: "Sunset Rooftop", emoji: "🌅", time: "Tonight", price: "K200/person", gradient: "from-amber-400 to-orange-500" },
+              { name: "Jazz Night",     emoji: "🎷", time: "Friday",  price: "K150/person", gradient: "from-purple-500 to-indigo-600" },
+              { name: "Food Market",   emoji: "🍜", time: "Saturday", price: "K80/person",  gradient: "from-emerald-400 to-teal-500" },
+            ].map((exp) => (
+              <button
+                key={exp.name}
+                type="button"
+                onClick={() => router.push("/plans/generate")}
+                className="snap-start shrink-0 min-w-[160px] rounded-2xl overflow-hidden bg-white border border-[#EBEBEB] shadow-sm active:scale-[0.97] transition-transform text-left"
+              >
+                <div className={`h-24 bg-gradient-to-br ${exp.gradient} flex items-center justify-center`}>
+                  <span className="text-5xl drop-shadow">{exp.emoji}</span>
+                </div>
+                <div className="p-3">
+                  <p className="font-bold text-[#222222] text-[13px] leading-tight mb-1">{exp.name}</p>
+                  <p className="text-[11px] text-[#888888]">{exp.time}</p>
+                  <p className="text-[12px] font-bold text-[#FF5A5F] mt-1">{exp.price}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Toggle + Cards */}
         <div className="px-6">
           {/* CHANGE 4 — Feed/Map toggle */}
