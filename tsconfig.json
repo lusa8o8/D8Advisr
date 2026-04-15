@@ -38,6 +38,7 @@
   ],
   "exclude": [
     "node_modules",
-    "D8Advisr updated replit ui"
+    "D8Advisr updated replit ui",
+    "tmp_replit_pages"
   ]
 }

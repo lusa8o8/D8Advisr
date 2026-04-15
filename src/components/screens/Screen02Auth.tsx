@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Eye, EyeOff } from "lucide-react";
 
 const authSchema = z.object({
   email: z.string().email(),
@@ -87,28 +88,28 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#F7F7F7] px-6 py-10">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 py-10">
       {/* Logo */}
       <div className="flex items-baseline mb-8">
-        <span className="font-bold text-3xl text-[#FF5A5F] tracking-tight">D8</span>
-        <span className="font-bold text-3xl text-[#222222] tracking-tight">Advisr</span>
+        <span className="font-bold text-3xl text-primary tracking-tight">D8</span>
+        <span className="font-bold text-3xl text-foreground tracking-tight">Advisr</span>
       </div>
 
-      <div className="w-full max-w-md rounded-3xl border border-[#EBEBEB] bg-white px-6 py-8 shadow-lg">
-        <h1 className="mb-6 text-center text-2xl font-bold text-[#222222]">
+      <div className="w-full max-w-md rounded-3xl border border-border bg-card px-6 py-8 shadow-sm">
+        <h1 className="mb-6 text-center text-2xl font-bold text-foreground">
           {mode === "signup" ? "Create your account" : "Welcome back"}
         </h1>
 
         <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-1">
-            <label className="text-sm font-semibold text-[#555555]">Email Address</label>
+            <label className="text-sm font-semibold text-muted-foreground">Email Address</label>
             {/* CHANGE 6: Input field styles */}
             <input
               {...register("email")}
               type="email"
               placeholder="name@example.com"
               onChange={() => setAuthError(null)}
-              className="w-full px-4 py-3.5 rounded-xl border border-[#EBEBEB] bg-[#F7F7F7] focus:bg-white focus:outline-none focus:border-[#FF5A5F] focus:ring-1 focus:ring-[#FF5A5F] transition-all text-[#222222] placeholder:text-gray-400"
+              className="w-full px-4 py-3.5 rounded-xl border border-border bg-background focus:bg-card focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-foreground placeholder:text-muted-foreground"
             />
             {errors.email && (
               <p className="text-xs text-red-500">{errors.email.message}</p>
@@ -116,31 +117,31 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-semibold text-[#555555]">Password</label>
+            <label className="text-sm font-semibold text-muted-foreground">Password</label>
             <div className="relative">
               <input
                 {...register("password")}
                 type={showPassword ? "text" : "password"}
                 placeholder="Create a password"
                 onChange={() => setAuthError(null)}
-                className="w-full px-4 py-3.5 pr-16 rounded-xl border border-[#EBEBEB] bg-[#F7F7F7] focus:bg-white focus:outline-none focus:border-[#FF5A5F] focus:ring-1 focus:ring-[#FF5A5F] transition-all text-[#222222] placeholder:text-gray-400"
+                className="w-full px-4 py-3.5 pr-12 rounded-xl border border-border bg-background focus:bg-card focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-foreground placeholder:text-muted-foreground"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#555555] font-medium"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                {showPassword ? "Hide" : "Show"}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            <p className="text-xs text-[#888888]">Must be at least 8 characters</p>
+            <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
             {errors.password && (
               <p className="text-xs text-red-500">{errors.password.message}</p>
             )}
           </div>
 
           {authError && (
-            <div className="bg-[#FFF0F1] border border-[#FF5A5F]/20 rounded-xl px-4 py-3 text-sm font-medium text-[#FF5A5F]">
+            <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-sm font-medium text-primary">
               {authError}
             </div>
           )}
@@ -149,23 +150,23 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#FF5A5F] text-white py-4 rounded-xl font-semibold text-[17px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.5)] active:scale-[0.98] transition-all disabled:opacity-60"
+            className="w-full bg-primary text-primary-foreground py-4 rounded-xl font-semibold text-[17px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.5)] active:scale-[0.98] transition-all disabled:opacity-60"
           >
             {loading ? "Please wait..." : mode === "signup" ? "Sign Up" : "Sign In"}
           </button>
         </form>
 
-        <div className="my-6 flex items-center gap-3 text-xs text-[#999999]">
-          <span className="h-px flex-1 bg-[#EBEBEB]" />
+        <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
           <span>OR</span>
-          <span className="h-px flex-1 bg-[#EBEBEB]" />
+          <span className="h-px flex-1 bg-border" />
         </div>
 
         {/* CHANGE 5: Real Google SVG */}
         <button
           onClick={handleGoogle}
           disabled={loading}
-          className="flex w-full items-center justify-center gap-3 rounded-xl border border-[#EBEBEB] bg-white px-4 py-3.5 text-sm font-semibold text-[#222222] transition hover:bg-[#F7F7F7] disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition hover:bg-background disabled:opacity-60"
         >
           <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -176,11 +177,11 @@ export default function Screen02Auth({ mode }: Screen02AuthProps) {
           Continue with Google
         </button>
 
-        <p className="mt-6 text-center text-sm text-[#555555]">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           {mode === "signup" ? "Already have an account?" : "Don't have an account?"}{" "}
           <Link
             href={mode === "signup" ? "/login" : "/signup"}
-            className="font-semibold text-[#FF5A5F]"
+            className="font-semibold text-primary"
           >
             {mode === "signup" ? "Sign In" : "Sign Up"}
           </Link>

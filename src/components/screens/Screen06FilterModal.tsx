@@ -64,26 +64,22 @@ export default function FilterModal({
         onClick={() => onOpenChange(false)}
       />
 
-      {/* CHANGE 1 — Modal container */}
-      <div className="bg-white w-full rounded-t-3xl pt-6 pb-10 px-6 flex flex-col max-h-[90%] overflow-y-auto shadow-2xl relative">
+      <div className="bg-card w-full rounded-t-3xl pt-6 pb-10 px-6 flex flex-col max-h-[90%] overflow-y-auto shadow-2xl relative">
 
-        {/* CHANGE 2 — Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-[#222222]">Filters</h2>
+          <h2 className="text-2xl font-bold text-foreground">Filters</h2>
           <button
             onClick={() => onOpenChange(false)}
-            className="w-8 h-8 bg-[#F7F7F7] rounded-full flex items-center justify-center text-[#222222]"
+            className="w-8 h-8 bg-background rounded-full flex items-center justify-center text-foreground"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="space-y-6">
+        <div className="flex flex-col gap-8">
           {/* Category */}
           <section>
-            {/* CHANGE 3 — Section label */}
-            <h3 className="font-bold text-[#222222] mb-3 text-sm">Category</h3>
-            {/* CHANGE 4 — Category chips */}
+            <h3 className="font-bold text-foreground mb-3 text-sm">Category</h3>
             <div className="flex flex-wrap gap-2">
               {CATEGORY_OPTIONS.map((option) => (
                 <button
@@ -92,8 +88,8 @@ export default function FilterModal({
                   onClick={() => setDraft({ ...draft, category: option.value })}
                   className={
                     draft.category === option.value
-                      ? "bg-[#FF5A5F] text-white border border-[#FF5A5F] px-4 py-2 rounded-full text-sm font-semibold"
-                      : "bg-white border border-[#EBEBEB] text-[#555555] px-4 py-2 rounded-full text-sm font-medium"
+                      ? "bg-primary text-primary-foreground border border-primary px-4 py-2 rounded-full text-sm font-semibold"
+                      : "bg-background border border-border text-foreground px-4 py-2 rounded-full text-sm font-medium"
                   }
                 >
                   {option.label}
@@ -105,8 +101,8 @@ export default function FilterModal({
           {/* Price Range */}
           <section>
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-bold text-[#222222] text-sm">Price Range</h3>
-              <span className="text-[#FF5A5F] font-bold text-sm">K50 — K{draft.priceLevel}</span>
+              <h3 className="font-bold text-foreground text-sm">Price Range</h3>
+              <span className="text-primary font-bold text-sm">K50 — K{draft.priceLevel}</span>
             </div>
             <input
               type="range"
@@ -115,19 +111,19 @@ export default function FilterModal({
               step="50"
               value={draft.priceLevel}
               onChange={(e) => setDraft({ ...draft, priceLevel: Number(e.target.value) })}
-              className="w-full accent-[#FF5A5F] h-1.5 bg-[#EBEBEB] rounded-lg appearance-none cursor-pointer"
+              className="w-full accent-primary h-1.5 bg-border rounded-lg appearance-none cursor-pointer"
             />
-            <div className="flex justify-between text-xs text-[#999999] font-bold mt-2">
+            <div className="flex justify-between text-xs text-muted-foreground font-bold mt-2">
               <span>K50</span>
               <span>K1000+</span>
             </div>
           </section>
 
-          {/* CHANGE 5 — Distance slider */}
+          {/* Distance */}
           <section>
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-bold text-[#222222] text-sm">Distance</h3>
-              <span className="text-[#FF5A5F] font-bold text-sm">Up to {draft.distance} km</span>
+              <h3 className="font-bold text-foreground text-sm">Distance</h3>
+              <span className="text-muted-foreground font-medium text-sm">Up to {draft.distance} km</span>
             </div>
             <input
               type="range"
@@ -136,17 +132,35 @@ export default function FilterModal({
               step="1"
               value={draft.distance}
               onChange={(e) => setDraft({ ...draft, distance: Number(e.target.value) })}
-              className="w-full accent-[#FF5A5F] h-1.5 bg-[#EBEBEB] rounded-lg appearance-none cursor-pointer"
+              className="w-full accent-primary h-1.5 bg-border rounded-lg appearance-none cursor-pointer"
             />
-            <div className="flex justify-between text-xs text-[#999999] font-bold mt-2">
+            <div className="flex justify-between text-xs text-muted-foreground font-bold mt-2">
               <span>1 km</span>
               <span>20 km</span>
             </div>
           </section>
 
+          {/* Date */}
+          <section>
+            <h3 className="font-bold text-foreground mb-3 text-sm">Date</h3>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { label: "Today",    day: new Date().getDate() },
+                { label: "Tomorrow", day: new Date().getDate() + 1 },
+                { label: new Date(Date.now() + 2 * 86400000).toLocaleDateString("en-US", { weekday: "short" }), day: new Date().getDate() + 2 },
+                { label: new Date(Date.now() + 3 * 86400000).toLocaleDateString("en-US", { weekday: "short" }), day: new Date().getDate() + 3 },
+              ].map((d, i) => (
+                <div key={d.label} className={`rounded-xl py-3 flex flex-col items-center justify-center ${i === 0 ? "bg-primary text-white" : "bg-background border border-border text-foreground"}`}>
+                  <span className={`text-xs font-medium mb-1 ${i === 0 ? "opacity-90" : "text-gray-500"}`}>{d.label}</span>
+                  <span className="text-xl font-bold">{d.day}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* Mood */}
           <section>
-            <h3 className="font-bold text-[#222222] mb-3 text-sm">Mood</h3>
+            <h3 className="font-bold text-foreground mb-3 text-sm">Mood</h3>
             <div className="flex flex-wrap gap-2">
               {MOOD_OPTIONS.map((mood) => (
                 <button
@@ -155,8 +169,8 @@ export default function FilterModal({
                   onClick={() => handleMoodToggle(mood)}
                   className={
                     draft.moods.includes(mood)
-                      ? "bg-[#FF5A5F] text-white border border-[#FF5A5F] px-4 py-2 rounded-full text-sm font-semibold"
-                      : "bg-white border border-[#EBEBEB] text-[#555555] px-4 py-2 rounded-full text-sm font-medium"
+                      ? "bg-primary text-primary-foreground border border-primary px-4 py-2 rounded-full text-sm font-semibold"
+                      : "bg-background border border-border text-foreground px-4 py-2 rounded-full text-sm font-medium"
                   }
                 >
                   {mood}
@@ -166,19 +180,18 @@ export default function FilterModal({
           </section>
         </div>
 
-        {/* CHANGE 6 — Bottom action buttons */}
         <div className="mt-10 flex items-center gap-4">
           <button
             type="button"
             onClick={resetFilters}
-            className="text-[#222222] font-semibold text-sm underline underline-offset-4"
+            className="text-foreground font-semibold text-sm underline underline-offset-4"
           >
             Reset
           </button>
           <button
             type="button"
             onClick={handleApply}
-            className="flex-1 bg-[#FF5A5F] text-white py-4 rounded-xl font-bold text-[16px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.5)] active:scale-[0.98] transition-all"
+            className="flex-1 bg-primary text-white py-4 rounded-xl font-bold text-[16px] shadow-lg shadow-primary/30 active:scale-[0.98] transition-all"
           >
             Apply Filters
           </button>

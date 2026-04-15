@@ -44,8 +44,8 @@ function DotRating({ value, onChange }: { value: number; onChange: (v: number) =
           className={cn(
             "w-8 h-8 rounded-full border-2 transition-all active:scale-90",
             n <= value
-              ? "bg-[#FF5A5F] border-[#FF5A5F] scale-105"
-              : "bg-gray-100 border-gray-200 hover:border-gray-300"
+              ? "bg-primary border-primary scale-105"
+              : "bg-background border-border hover:border-gray-300"
           )}
         />
       ))}
@@ -61,11 +61,11 @@ function Step1Mood({ onSelect }: { onSelect: (score: number, emoji: string) => v
   return (
     <div className="flex flex-col flex-1 px-6 pt-4 pb-8">
       <div className="flex-1 flex flex-col items-center justify-center">
-        <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-3">Step 1 of 3</p>
-        <h2 className="text-[26px] font-black text-gray-900 text-center leading-tight mb-2">
+        <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Step 1 of 3</p>
+        <h2 className="text-[26px] font-black text-foreground text-center leading-tight mb-2">
           How was your<br />evening?
         </h2>
-        <p className="text-[14px] text-gray-500 text-center mb-10">Tap once — that&apos;s all you need.</p>
+        <p className="text-[14px] text-muted-foreground text-center mb-10">Tap once — that&apos;s all you need.</p>
 
         <div className="flex flex-col gap-3 w-full max-w-xs">
           {MOOD_OPTIONS.map(opt => (
@@ -76,17 +76,17 @@ function Step1Mood({ onSelect }: { onSelect: (score: number, emoji: string) => v
               className={cn(
                 "flex items-center gap-4 px-5 py-4 rounded-2xl border-2 transition-all active:scale-[0.97]",
                 selected === opt.score
-                  ? "border-[#FF5A5F] bg-[#FF5A5F]/5 shadow-md"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-primary bg-primary/5 shadow-md"
+                  : "border-border bg-card hover:border-gray-300"
               )}
             >
               <span className="text-3xl leading-none">{opt.emoji}</span>
               <span className={cn(
                 "font-bold text-[15px] transition-colors",
-                selected === opt.score ? "text-[#FF5A5F]" : "text-gray-800"
+                selected === opt.score ? "text-primary" : "text-foreground"
               )}>{opt.label}</span>
               {selected === opt.score && (
-                <div className="ml-auto w-5 h-5 rounded-full bg-[#FF5A5F] flex items-center justify-center shrink-0">
+                <div className="ml-auto w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0">
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                     <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -107,8 +107,8 @@ function Step1Mood({ onSelect }: { onSelect: (score: number, emoji: string) => v
         className={cn(
           "w-full py-4 rounded-2xl font-bold text-[16px] transition-all",
           selected !== null
-            ? "bg-[#FF5A5F] text-white shadow-[0_8px_20px_-6px_rgba(255,90,95,0.45)] active:scale-[0.98]"
-            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            ? "bg-primary text-primary-foreground shadow-[0_8px_20px_-6px_rgba(255,90,95,0.45)] active:scale-[0.98]"
+            : "bg-border text-muted-foreground cursor-not-allowed"
         )}
       >
         Continue →
@@ -148,9 +148,9 @@ function Step2Venues({
   return (
     <div className="flex flex-col flex-1 px-6 pt-4 pb-8">
       <div className="flex-1 flex flex-col">
-        <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-3 text-center">Step 2 of 3</p>
-        <h2 className="text-[22px] font-black text-gray-900 text-center leading-tight mb-1">Rate each stop</h2>
-        <p className="text-[13px] text-gray-400 text-center mb-6">Two quick ratings per venue.</p>
+        <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest mb-3 text-center">Step 2 of 3</p>
+        <h2 className="text-[22px] font-black text-foreground text-center leading-tight mb-1">Rate each stop</h2>
+        <p className="text-[13px] text-muted-foreground text-center mb-6">Two quick ratings per venue.</p>
 
         {/* Stop selector pills */}
         <div className="flex gap-2 justify-center mb-6 flex-wrap">
@@ -162,10 +162,10 @@ function Step2Venues({
               className={cn(
                 "px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border",
                 activeIdx === i
-                  ? "bg-[#FF5A5F] text-white border-[#FF5A5F] shadow-sm"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
                   : (ratings[s.venue_id]?.vibe ?? 0) > 0 && (ratings[s.venue_id]?.value ?? 0) > 0
                   ? "bg-[#00C851]/10 text-[#00C851] border-[#00C851]/30"
-                  : "bg-gray-100 text-gray-500 border-gray-200"
+                  : "bg-background text-muted-foreground border-border"
               )}
             >
               {i + 1}. {s.venue_name}
@@ -174,25 +174,25 @@ function Step2Venues({
         </div>
 
         {/* Venue card */}
-        <div key={stop.id} className="bg-white rounded-3xl border border-gray-200 shadow-sm p-5 mb-6">
+        <div key={stop.id} className="bg-card rounded-3xl border border-border shadow-sm p-5 mb-6">
           <div className="mb-4">
-            <p className="font-bold text-gray-900 text-[15px] leading-tight">{stop.venue_name}</p>
+            <p className="font-bold text-foreground text-[15px] leading-tight">{stop.venue_name}</p>
           </div>
 
-          <div className="h-px bg-gray-100 mb-4" />
+          <div className="h-px bg-border mb-4" />
 
           <div className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-bold text-gray-800 text-[14px]">Vibe</p>
-                <p className="text-[11px] text-gray-400">Atmosphere &amp; energy</p>
+                <p className="font-bold text-foreground text-[14px]">Vibe</p>
+                <p className="text-[11px] text-muted-foreground">Atmosphere &amp; energy</p>
               </div>
               <DotRating value={r.vibe} onChange={v => onUpdate(stop.venue_id, "vibe", v)} />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-bold text-gray-800 text-[14px]">Value</p>
-                <p className="text-[11px] text-gray-400">Worth what you paid</p>
+                <p className="font-bold text-foreground text-[14px]">Value</p>
+                <p className="text-[11px] text-muted-foreground">Worth what you paid</p>
               </div>
               <DotRating value={r.value} onChange={v => onUpdate(stop.venue_id, "value", v)} />
             </div>
@@ -204,7 +204,7 @@ function Step2Venues({
           {stops.map((_, i) => (
             <div key={i} className={cn(
               "h-1.5 rounded-full transition-all",
-              i === activeIdx ? "w-6 bg-[#FF5A5F]" : (ratings[stops[i].venue_id]?.vibe ?? 0) > 0 ? "w-3 bg-[#00C851]" : "w-3 bg-gray-200"
+              i === activeIdx ? "w-6 bg-primary" : (ratings[stops[i].venue_id]?.vibe ?? 0) > 0 ? "w-3 bg-[#00C851]" : "w-3 bg-border"
             )} />
           ))}
         </div>
@@ -258,27 +258,27 @@ function Step3Notes({
   return (
     <div className="flex flex-col flex-1 px-6 pt-4 pb-8">
       <div className="flex-1">
-        <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-3 text-center">Step 3 of 3</p>
-        <h2 className="text-[22px] font-black text-gray-900 text-center leading-tight mb-1">Anything to add?</h2>
-        <p className="text-[13px] text-gray-400 text-center mb-6">Totally optional — helps future planners.</p>
+        <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest mb-3 text-center">Step 3 of 3</p>
+        <h2 className="text-[22px] font-black text-foreground text-center leading-tight mb-1">Anything to add?</h2>
+        <p className="text-[13px] text-muted-foreground text-center mb-6">Totally optional — helps future planners.</p>
 
         {/* Text field */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-5">
+        <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden mb-5">
           <textarea
             value={note}
             onChange={e => onNoteChange(e.target.value)}
             placeholder="The lighting was everything… the cocktails were strong… would come back in a heartbeat…"
             maxLength={280}
             rows={4}
-            className="w-full px-4 pt-4 pb-2 text-[14px] text-gray-800 placeholder-gray-400 resize-none outline-none font-medium leading-relaxed"
+            className="w-full px-4 pt-4 pb-2 text-[14px] text-foreground placeholder:text-muted-foreground resize-none outline-none font-medium leading-relaxed bg-transparent"
           />
           <div className="px-4 pb-3 text-right">
-            <span className="text-[11px] text-gray-300 font-medium">{note.length}/280</span>
+            <span className="text-[11px] text-muted-foreground/50 font-medium">{note.length}/280</span>
           </div>
         </div>
 
         {/* Vibe tags */}
-        <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-3">Pick up to 3 vibes</p>
+        <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Pick up to 3 vibes</p>
         <div className="flex flex-wrap gap-2">
           {VIBE_TAGS.map(tag => {
             const active = tags.includes(tag);
@@ -291,10 +291,10 @@ function Step3Notes({
                 className={cn(
                   "px-3.5 py-2 rounded-full text-[12px] font-semibold border transition-all active:scale-95",
                   active
-                    ? "bg-[#FF5A5F] text-white border-[#FF5A5F] shadow-sm"
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
                     : maxed
-                    ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    ? "bg-background/50 text-muted-foreground/50 border-border/50 cursor-not-allowed"
+                    : "bg-card text-foreground border-border hover:border-gray-300"
                 )}
               >
                 {tag}
@@ -403,21 +403,21 @@ export default function Screen13Feedback({ plan, stops }: Screen13FeedbackProps)
   };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-[#F7F7F7]">
+    <div className="flex-1 min-h-0 flex flex-col bg-background">
 
       {/* Header */}
-      <div className="shrink-0 px-5 pt-14 pb-4 bg-white border-b border-gray-100 relative">
+      <div className="shrink-0 px-5 pt-14 pb-4 bg-card border-b border-border relative">
         <button
           type="button"
           onClick={() => step > 1 ? setStep(s => (s - 1) as 1 | 2 | 3) : router.back()}
-          className="absolute left-5 top-14 w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 active:scale-95 transition-transform"
+          className="absolute left-5 top-14 w-9 h-9 rounded-full bg-background flex items-center justify-center text-foreground active:scale-95 transition-transform"
         >
           <ArrowLeft size={18} />
         </button>
         <div className="text-center">
-          <p className="text-[10px] font-black text-[#FF5A5F] uppercase tracking-widest mb-0.5">Post-Date Review</p>
-          <p className="font-bold text-gray-900 text-[16px]">{getStepLabel()}</p>
-          <p className="text-[11px] text-gray-400 mt-0.5">{plan.title}</p>
+          <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-0.5">Post-Date Review</p>
+          <p className="font-bold text-foreground text-[16px]">{getStepLabel()}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{plan.title}</p>
         </div>
 
         {/* Step progress bar */}
@@ -427,7 +427,7 @@ export default function Screen13Feedback({ plan, stops }: Screen13FeedbackProps)
               key={s}
               className={cn(
                 "h-1 flex-1 rounded-full transition-all",
-                s <= step ? "bg-[#FF5A5F]" : "bg-gray-200"
+                s <= step ? "bg-primary" : "bg-border"
               )}
             />
           ))}

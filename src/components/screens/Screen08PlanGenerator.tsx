@@ -168,37 +168,37 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7] pb-32">
-      {/* CHANGE 4: Sticky white header with Sparkles */}
-      <div className="px-6 pt-14 pb-8 bg-white shadow-sm rounded-b-3xl sticky top-0 z-10">
+    <div className="min-h-screen bg-background pb-32">
+      {/* Sticky header */}
+      <div className="px-6 pt-14 pb-6 bg-card border-b border-border sticky top-0 z-10">
         <button
           type="button"
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#555555] mb-4"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-4"
         >
           <ArrowLeft size={16} />
           Back
         </button>
         {searchParams.get("venue_name") && (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#FFF0F1] border border-[#FFD0D1] rounded-full mb-4">
-            <span className="text-[11px] font-bold text-[#FF5A5F] uppercase tracking-wider">Building around</span>
-            <span className="text-[12px] font-bold text-[#222222]">{searchParams.get("venue_name")}</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/25 rounded-full mb-4">
+            <span className="text-[11px] font-bold text-primary uppercase tracking-wider">Building around</span>
+            <span className="text-[12px] font-bold text-foreground">{searchParams.get("venue_name")}</span>
           </div>
         )}
         <div className="flex items-center gap-2 mb-6">
-          <Sparkles className="text-[#FF5A5F]" size={28} />
-          <h1 className="text-[28px] font-bold text-[#222222]">Build Your Plan</h1>
+          <Sparkles className="text-primary" size={28} />
+          <h1 className="text-[28px] font-bold text-foreground">Build Your Plan</h1>
         </div>
 
-        {/* CHANGE 5: Toggle pill style */}
-        <div className="bg-[#F7F7F7] p-1 rounded-xl flex mb-6">
+        {/* Toggle */}
+        <div className="flex bg-card p-1 rounded-full shadow-sm border border-border">
           <button
             type="button"
             onClick={() => setPlanType("date")}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+            className={`flex-1 py-3 rounded-full text-sm font-bold transition-all ${
               planType === "date"
-                ? "bg-white shadow-sm text-[#222222]"
-                : "text-[#555555]"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Solo / Date
@@ -206,30 +206,31 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
           <button
             type="button"
             onClick={() => setPlanType("group")}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+            className={`flex-1 py-3 rounded-full text-sm font-bold transition-all ${
               planType === "group"
-                ? "bg-white shadow-sm text-[#222222]"
-                : "text-[#555555]"
+                ? "bg-foreground text-card shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Group
+            Group Plan
           </button>
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
-        <div className="space-y-2 rounded-2xl border border-[#E5E5E5] bg-white p-4">
-          <p className="text-sm font-semibold text-[#222222]">Occasion</p>
-          <div className="flex flex-wrap gap-2">
+      <div className="px-6 py-8 flex flex-col gap-8">
+        {/* Occasion */}
+        <div>
+          <h3 className="font-bold text-foreground mb-3 text-[15px]">Occasion</h3>
+          <div className="flex flex-wrap gap-2.5">
             {OCCASION_OPTIONS.map((option) => (
               <button
                 key={option}
                 type="button"
                 onClick={() => toggleOccasion(option)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${
                   occasionSelection.includes(option)
-                    ? "bg-[#FF5A5F] text-white"
-                    : "border border-[#E5E5E5] text-[#555555]"
+                    ? "bg-foreground text-card shadow-md"
+                    : "bg-card border border-border text-foreground hover:border-gray-300"
                 }`}
               >
                 {option}
@@ -238,18 +239,19 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
           </div>
         </div>
 
-        <div className="space-y-2 rounded-2xl border border-[#E5E5E5] bg-white p-4">
-          <p className="text-sm font-semibold text-[#222222]">Vibe / Mood</p>
-          <div className="flex flex-wrap gap-2">
+        {/* Vibe / Mood */}
+        <div>
+          <h3 className="font-bold text-foreground mb-3 text-[15px]">Vibe / Mood</h3>
+          <div className="flex flex-wrap gap-2.5">
             {VIBE_OPTIONS.map((option) => (
               <button
                 key={option}
                 type="button"
                 onClick={() => toggleVibe(option)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${
                   vibeSelection.includes(option)
-                    ? "bg-[#FF5A5F] text-white"
-                    : "border border-[#E5E5E5] text-[#555555]"
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
+                    : "bg-card border border-border text-foreground hover:border-gray-300"
                 }`}
               >
                 {option}
@@ -258,36 +260,55 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
           </div>
         </div>
 
-        <div className="space-y-2 rounded-2xl border border-[#E5E5E5] bg-white p-4">
-          <label className="text-sm font-semibold text-[#222222]">Budget (ZMW)</label>
-          <input
-            type="number"
-            min={0}
-            value={budget}
-            onChange={(event) => setBudget(Number(event.target.value))}
-            className="w-full rounded-2xl border border-[#E5E5E5] px-3 py-2 text-base text-[#222222] outline-none focus:border-[#FF5A5F]"
-          />
-          <p className="text-xs text-[#555555]">
-            Per person for solo/date, total for group
-          </p>
+        {/* Details */}
+        <div className="flex flex-col gap-4">
+          <h3 className="font-bold text-foreground text-[15px]">Details</h3>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">When</label>
+              <input
+                type="text"
+                value={whenText}
+                onChange={(event) => setWhenText(event.target.value)}
+                placeholder="Tonight, Saturday..."
+                className="w-full bg-card border border-border rounded-xl px-4 py-3.5 text-foreground font-medium focus:outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Budget (ZMW)</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground font-bold text-sm">K</span>
+              <input
+                type="number"
+                min={0}
+                value={budget}
+                onChange={(event) => setBudget(Number(event.target.value))}
+                className="w-full bg-card border border-border rounded-xl pl-9 pr-4 py-3.5 text-foreground font-medium focus:outline-none focus:border-primary"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5">Per person for solo/date, total for group</p>
+          </div>
         </div>
 
         {planType === "group" && (
-          <div className="space-y-2 rounded-2xl border border-[#E5E5E5] bg-white p-4">
-            <p className="text-sm font-semibold text-[#222222]">How many people?</p>
-            <div className="flex items-center gap-3">
+          <div>
+            <h3 className="font-bold text-foreground mb-3 text-[15px]">How many people?</h3>
+            <div className="flex items-center gap-4 bg-card border border-border rounded-xl p-4">
               <button
                 type="button"
                 onClick={() => setGroupSize((prev) => Math.max(prev - 1, 2))}
-                className="rounded-full border border-[#E5E5E5] px-3 py-1 text-lg font-semibold text-[#555555]"
+                className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-lg font-semibold text-foreground"
               >
                 -
               </button>
-              <span className="text-lg font-semibold text-[#222222]">{groupSize}</span>
+              <span className="text-lg font-semibold text-foreground flex-1 text-center">{groupSize} people</span>
               <button
                 type="button"
                 onClick={() => setGroupSize((prev) => Math.min(prev + 1, 20))}
-                className="rounded-full border border-[#E5E5E5] px-3 py-1 text-lg font-semibold text-[#555555]"
+                className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-lg font-semibold text-foreground"
               >
                 +
               </button>
@@ -295,24 +316,13 @@ export default function Screen08PlanGenerator({ initialVenueId }: Screen08PlanGe
           </div>
         )}
 
-        <div className="space-y-2 rounded-2xl border border-[#E5E5E5] bg-white p-4">
-          <label className="text-sm font-semibold text-[#222222]">When? (optional)</label>
-          <input
-            type="text"
-            value={whenText}
-            onChange={(event) => setWhenText(event.target.value)}
-            placeholder="Tonight, This weekend, Saturday evening..."
-            className="w-full rounded-2xl border border-[#E5E5E5] px-3 py-2 text-base text-[#222222] outline-none focus:border-[#FF5A5F]"
-          />
-        </div>
-
         <button
           type="button"
           onClick={handleGenerate}
           disabled={!canGenerate}
-          className="mt-4 flex items-center justify-center rounded-2xl bg-[#FF5A5F] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60 active:scale-[0.98] transition-all"
+          className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-[18px] rounded-xl font-bold text-[17px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.6)] active:scale-[0.98] transition-all disabled:opacity-60 hover:bg-primary/90"
         >
-          {isLoading ? "🤔 Finding the perfect plan..." : "Generate My Plan ✨"}
+          {isLoading ? "Finding the perfect plan..." : "Generate Plan ✨"}
         </button>
       </div>
 

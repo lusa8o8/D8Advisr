@@ -1,8 +1,10 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Users, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const OCCASIONS = [
   "Birthday",
@@ -57,102 +59,160 @@ export default function Screen17GroupPlan() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7] pb-32">
-      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
-        <header>
-          <button type="button" onClick={() => router.push("/plans")} className="text-sm font-semibold text-[#222222]">
-            ← Back
-          </button>
-          <h1 className="mt-3 text-2xl font-bold text-[#222222]">Create Group Plan</h1>
-        </header>
-
-        <section className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
-          <label className="text-sm font-semibold text-[#222222]">Event Name</label>
-          <input
-            className="mt-2 w-full rounded-2xl border border-[#E5E5E5] px-3 py-2 text-sm"
-            placeholder="Event name"
-            value={eventName}
-            onChange={(event) => setEventName(event.target.value)}
-          />
-        </section>
-
-        <section className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-[#222222]">Occasion</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {OCCASIONS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setOccasion(item)}
-                className={`rounded-full border px-4 py-1 text-xs font-semibold transition ${
-                  occasion === item
-                    ? "bg-[#FF5A5F] text-white"
-                    : "border-[#E5E5E5] text-[#555555] bg-white"
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm space-y-3">
-          <label className="text-sm font-semibold text-[#222222]">Number of People</label>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setParticipantCount((prev) => Math.max(prev - 1, 2))}
-              className="rounded-full border border-[#E5E5E5] px-3 py-1 text-sm"
-            >
-              -
-            </button>
-            <span className="text-lg font-semibold text-[#222222]">{participantCount}</span>
-            <button
-              type="button"
-              onClick={() => setParticipantCount((prev) => Math.min(prev + 1, 50))}
-              className="rounded-full border border-[#E5E5E5] px-3 py-1 text-sm"
-            >
-              +
-            </button>
-          </div>
-          <label className="text-sm font-semibold text-[#222222]">Budget per Person (ZMW)</label>
-          <input
-            type="number"
-            min={0}
-            value={budget}
-            onChange={(event) => setBudget(Number(event.target.value))}
-            className="mt-2 w-full rounded-2xl border border-[#E5E5E5] px-3 py-2 text-sm"
-          />
-        </section>
-
-        <section className="rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-[#222222]">Group Vibe</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {VIBES.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setVibe(item)}
-                className={`rounded-full border px-4 py-1 text-xs font-semibold transition ${
-                  vibe === item
-                    ? "bg-[#FF5A5F] text-white"
-                    : "border-[#E5E5E5] text-[#555555] bg-white"
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        </section>
-
+    <div className="min-h-screen bg-background flex flex-col pb-10">
+      {/* Sticky header */}
+      <div className="bg-card px-6 pt-14 pb-4 flex items-center gap-4 sticky top-0 z-20 shadow-sm border-b border-border">
         <button
           type="button"
-          onClick={handleGenerate}
-          disabled={isLoading}
-          className="rounded-xl bg-[#FF5A5F] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          onClick={() => router.push("/plans")}
+          className="w-10 h-10 bg-background rounded-full flex items-center justify-center text-foreground"
         >
-          {isLoading ? "Finding experiences..." : "Find Group Experiences"}
+          <ArrowLeft size={20} />
         </button>
+        <h1 className="font-bold text-foreground text-lg">Create Group Plan</h1>
+      </div>
+
+      <div className="px-6 py-8">
+        {/* Hero */}
+        <div className="mb-8 text-center">
+          <div className="w-16 h-16 bg-[#E8F4FF] rounded-full mx-auto flex items-center justify-center text-blue-500 mb-4 shadow-sm border border-blue-100">
+            <Users size={30} />
+          </div>
+          <h2 className="text-[28px] font-extrabold text-foreground leading-tight">
+            Planning something together?
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          {/* Event name */}
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">
+              Event / Group Name
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Sarah's Birthday Bash"
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              className="w-full bg-card border border-border rounded-xl px-4 py-4 text-foreground font-semibold focus:outline-none focus:border-primary shadow-sm"
+            />
+          </div>
+
+          {/* Who's coming */}
+          <div className="bg-card border border-border rounded-3xl p-5 shadow-sm">
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 block">
+              Who's coming?
+            </label>
+            <div className="flex items-center gap-1 mb-4">
+              <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center border-2 border-white shadow-sm z-10 relative text-sm">
+                You
+              </div>
+              {participantCount > 1 && (
+                <div className="w-12 h-12 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center border-2 border-white shadow-sm z-20 relative -ml-3 text-sm">
+                  +{participantCount - 1}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setParticipantCount((prev) => Math.min(prev + 1, 50))}
+                className="w-12 h-12 rounded-full bg-background border-2 border-dashed border-gray-400 text-gray-500 font-bold flex items-center justify-center z-30 relative ml-2"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setParticipantCount((prev) => Math.max(prev - 1, 2))}
+                className="w-9 h-9 rounded-full border border-border bg-background flex items-center justify-center text-foreground font-bold"
+              >
+                −
+              </button>
+              <span className="text-lg font-bold text-foreground">{participantCount} people</span>
+              <button
+                type="button"
+                onClick={() => setParticipantCount((prev) => Math.min(prev + 1, 50))}
+                className="w-9 h-9 rounded-full border border-border bg-background flex items-center justify-center text-foreground font-bold"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Occasion */}
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 block">
+              Occasion
+            </label>
+            <div className="flex flex-wrap gap-2.5">
+              {OCCASIONS.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setOccasion(item)}
+                  className={cn(
+                    "px-5 py-3 rounded-full text-sm font-semibold transition-all active:scale-95",
+                    occasion === item
+                      ? "bg-foreground text-card shadow-md"
+                      : "bg-card border border-border text-foreground shadow-sm"
+                  )}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Vibe */}
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 block">
+              Group Vibe
+            </label>
+            <div className="flex flex-wrap gap-2.5">
+              {VIBES.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setVibe(item)}
+                  className={cn(
+                    "px-5 py-3 rounded-full text-sm font-semibold transition-all active:scale-95",
+                    vibe === item
+                      ? "bg-foreground text-card shadow-md"
+                      : "bg-card border border-border text-foreground shadow-sm"
+                  )}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Budget per person */}
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">
+              Budget / Person
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground font-bold">K</span>
+              <input
+                type="number"
+                min={0}
+                value={budget}
+                onChange={(e) => setBudget(Number(e.target.value))}
+                className="w-full bg-card border border-border rounded-xl pl-8 pr-4 py-4 text-foreground font-semibold focus:outline-none focus:border-primary shadow-sm"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={isLoading}
+            className="w-full bg-primary text-primary-foreground py-[18px] rounded-xl font-bold text-[17px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.6)] active:scale-[0.98] transition-all mt-2 flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            {isLoading ? "Finding experiences..." : "Generate Group Plan ✨"}
+          </button>
+        </div>
       </div>
     </div>
   );
