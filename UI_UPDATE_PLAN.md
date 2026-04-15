@@ -64,8 +64,10 @@ Strictly visual.
   1. Experience cards: gradient bg + `bg-gradient-to-t from-black/50 via-black/20 to-transparent` overlay, emoji absolutely centered, urgency badge top-right (`bg-white/90 text-[#FF9500]`), vibe pills bottom-left (VIBE_COLORS map), price bottom-right — `mb-2.5` on date line.
   2. Venue cards: add `bg-gradient-to-t from-black/40 via-transparent to-black/10` dark overlay on hero, event badge bottom-right (`bg-black/55`, heuristic for bar/activity), description line using `activity_type` (`text-[14px] leading-relaxed line-clamp-2`).
   3. Tabs: align to ref `['All', 'Date Night', 'Adventure', 'Foodie', 'Group']` — update `matchesCategoryFilter` for "Foodie" (same as Food) and "Group" (show all).
+- **Post-inspection fix (2026-04-15)**: Venue category row was showing `activity_type` twice (`venue.category · venue.activity_type` + description paragraph). Fixed by removing `activity_type` from the category row — only `venue.category` shown there. Description paragraph keeps `activity_type`.
 - **Keep intact**: All filter state, search logic, distance calc, fetch-on-filter, FAB, router.push calls.
 - **Scope**: Large
+- **Verified**: ✅ User confirmed clean on phone
 
 ---
 
@@ -108,10 +110,20 @@ Strictly visual.
 - **Reference**: `PlanGenerator.tsx`
 - **Diff**:
   - Loading animation: already matches reference (D8 comet animation) — no change needed.
-  - Full form mode: Solo/Group toggle, Occasion chips, Vibe/Mood chips, When/Time date inputs, Budget input with `₦`→`K` prefix, Area input. Generate button at bottom.
+  - Full form mode: Solo/Group toggle, Occasion chips, Vibe/Mood chips, When text input, Budget input with `K` prefix. Generate button at bottom.
   - Build-around mode: locked venue card with "Anchored stop" pill. When/Who/Budget steps. Fixed CTA.
-- **Keep intact**: All existing `useSearchParams` reading, `generatePlan` API call, router.push after generation, loading state.
+- **Post-inspection fix (2026-04-15)**: Build-around mode was not implemented — showed full form even when `venue_id` in URL. Fixed by adding `BuildAroundMode` sub-component:
+  - Activates when both `venue_id` AND `venue_name` search params are present
+  - Locked venue card: emoji (from `CATEGORY_EMOJIS[venueCategory]`), name, category, "Anchored stop" pill, lock icon
+  - When? pills: Tonight / Tomorrow / This Weekend (`bg-foreground text-card` active)
+  - Who's joining? 2×2 grid with emoji + label (`bg-primary` active); maps to group_size: couple→2, solo→1, small→3, large→6
+  - Budget slider: `BUDGET_STEPS = [250, 500, 750, 1000, 1500, 2000, 3000]` (K ZMW)
+  - Fixed CTA: "Build My Evening ✨" + "{venueName} will be your confirmed stop"
+  - All wired to existing `/api/plans/generate-ai` endpoint via `handleGenerate` overrides — no backend changes
+  - Screen07 updated to pass `venue_category` in URL alongside `venue_id` + `venue_name`
+- **Keep intact**: All existing `useSearchParams` reading, `/api/plans/generate-ai` API call, router.push after generation, loading state, D8LoadingOverlay.
 - **Scope**: Large
+- **Verified**: ✅ User confirmed clean on phone
 
 ---
 
@@ -153,8 +165,14 @@ Strictly visual.
 - **File**: `src/components/screens/Screen12ExecutionTracker.tsx`
 - **Reference**: `ExecutionTracker.tsx`
 - **Diff**: Step progress bar redesigned (circle nodes + line connector, active step has glow ring). Current step card has "IN PROGRESS" animated pill. Navigation active card. Mark Complete → green button. Next step preview card (dashed border). Footer quick actions: Call Venue / Share Live / Get Help (circular buttons).
-- **Keep intact**: All existing step state, completion API call, router.push.
+- **Post-inspection fix (2026-04-15)**:
+  - IN PROGRESS pill: `bg-primary/5` → `bg-[#FFF0F1]` (exact reference token)
+  - Mark Complete: removed Directions button alongside it; now single `w-full` button matching reference exactly (`py-4` height)
+  - Up Next arrow: `→` text → `📍` emoji circle (reference uses venue-specific emoji; 📍 used as dynamic fallback)
+  - Footer: `left-0 right-0` → `w-full max-w-[430px]` matching reference
+- **Keep intact**: All existing step state, completion router.push, modal flow, completion check logic.
 - **Scope**: Moderate
+- **Verified**: ✅ User confirmed "you're on your date screen is clean"
 
 ---
 
@@ -276,6 +294,7 @@ Strictly visual.
 
 ## BottomNav & TopBar
 - **BottomNav**: Already matches reference pattern. Minor: ensure active state uses `bg-foreground text-card` on the active pill if the reference uses it. Currently uses `text-[#FF5A5F]`. Keeping existing behaviour — no change needed.
+- **BottomNav z-index fix (2026-04-15)**: BottomNav was `z-20` and rendered after `{children}` in layout, so it painted over screen-level fixed action bars (Screen07, 09, 10, 11, 12, 13). Fixed: BottomNav → `z-10`, all screen action bars kept at `z-20`. Universal unblock confirmed.
 - **TopBar**: Check if reference `TopBar` from SharedUI has visual differences. Minor styling pass if needed.
 
 ---
@@ -290,7 +309,7 @@ Strictly visual.
 | Q4 City list | **B — Lusaka-only + "more cities coming" info card** |
 | Q5 Budget warmth/type | **A — Visual-only heuristic decorations** |
 
-**Status: ✅ COMPLETE — All 22 screens done (2026-04-15)**
+**Status: ✅ COMPLETE — All 22 screens done + post-inspection fixes applied (2026-04-15)**
 
 ---
 
@@ -309,30 +328,32 @@ Strictly visual.
 
 | # | Screen | File | Status | Session |
 |---|--------|------|--------|---------|
-| ✅ | BottomNav + TopBar | layout/ | No change needed (matches ref) | — |
-| ✅ | 01 Welcome | Screen01Welcome.tsx | Done | Apr 9 AM |
-| ✅ | 02 Auth | Screen02Auth.tsx | Done | Apr 9 AM |
-| ✅ | 03 Preferences | Screen03Preferences.tsx | Done | Apr 9 AM |
-| ✅ | 04 Home | Screen04Home.tsx | Done | Apr 9 AM |
-| ✅ | 06 Filter Modal | Screen06FilterModal.tsx | Done | Apr 9 AM |
-| ✅ | 07 Venue Detail | Screen07VenueDetail.tsx | Done | Apr 9 AM |
-| ✅ | 08 Plan Generator | Screen08PlanGenerator.tsx | Done | Apr 9 AM |
-| ✅ | 09 Plan Overview | Screen09PlanOverview.tsx | Done | Apr 9 AM |
-| ✅ | 10 Plan Detail | Screen10PlanDetail.tsx | Done | Apr 9 AM |
-| ✅ | 11 Plan Edit | Screen11PlanEdit.tsx | Done | Apr 9 AM |
-| ✅ | 12 Execution Tracker | Screen12ExecutionTracker.tsx | Done | Apr 9 AM |
-| ✅ | 13 Feedback | Screen13Feedback.tsx | Done | Apr 9 AM |
-| ✅ | 14 Profile | profile/page.tsx | Done | Apr 9 AM |
-| ✅ | 16 Budget | Screen16Budget.tsx | Done | Apr 9 AM |
-| ✅ | 19 Review Complete | Screen19ReviewComplete.tsx | Done | Apr 9 AM |
-| ✅ | 20 Badges | Screen20Badges.tsx | Done | Apr 9 AM |
+| # | Screen | File | Status | Notes |
+|---|--------|------|--------|-------|
+| ✅ | BottomNav | layout/BottomNav.tsx | Done + fixed | z-20→z-10 unblocked all action bars |
+| ✅ | 01 Welcome | Screen01Welcome.tsx | Done | Apr 9 |
+| ✅ | 02 Auth | Screen02Auth.tsx | Done | Apr 9 |
+| ✅ | 03 Preferences | Screen03Preferences.tsx | Done | Apr 9 |
+| ✅ | 04 Home | Screen04Home.tsx | Done + verified | Post-fix: activity_type duplicate removed |
+| ✅ | 05 Map | Screen05Map.tsx | Done | Apr 15 |
+| ✅ | 06 Filter Modal | Screen06FilterModal.tsx | Done | Apr 9 |
+| ✅ | 07 Venue Detail | Screen07VenueDetail.tsx | Done + fixed | categoryGradient added; passes venue_category to generator |
+| ✅ | 08 Plan Generator | Screen08PlanGenerator.tsx | Done + verified | BuildAroundMode fully implemented |
+| ✅ | 09 Plan Overview | Screen09PlanOverview.tsx | Done | Apr 9 |
+| ✅ | 10 Plan Detail | Screen10PlanDetail.tsx | Done | Apr 9 |
+| ✅ | 11 Plan Edit | Screen11PlanEdit.tsx | Done | Apr 9 |
+| ✅ | 12 Execution Tracker | Screen12ExecutionTracker.tsx | Done + verified | Post-fix: pill color, single CTA, footer max-w |
+| ✅ | 13 Feedback | Screen13Feedback.tsx | Done + verified | User confirmed feedback flow clean |
+| ✅ | 14 Profile | profile/page.tsx | Done | Apr 15 |
 | ✅ | 15 Preferences Edit | Screen15Preferences.tsx | Done | Apr 15 |
+| ✅ | 16 Budget | Screen16Budget.tsx | Done | Apr 15 |
 | ✅ | 17 Group Plan | Screen17GroupPlan.tsx | Done | Apr 15 |
 | ✅ | 18 Notifications | Screen18Notifications.tsx | Done | Apr 15 |
+| ✅ | 19 Review Complete | Screen19ReviewComplete.tsx | Done | Apr 9/15 |
+| ✅ | 20 Badges | Screen20Badges.tsx | Done | Apr 9 |
 | ✅ | Plans List | PlansClient.tsx | Done | Apr 15 |
-| ✅ | 05 Map | Screen05Map.tsx | Done | Apr 15 |
-| ✅ | Admin/Curator | QuickAddForm.tsx | Skipped (Q1) | — |
-| ✅ | not-found | — | Skipped (Q2) | — |
+| ⏭ | Admin/Curator | QuickAddForm.tsx | Skipped (Q1) | — |
+| ⏭ | not-found | — | Skipped (Q2) | — |
 
 ---
 
