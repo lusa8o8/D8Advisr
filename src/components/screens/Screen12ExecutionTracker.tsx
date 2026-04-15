@@ -42,13 +42,6 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
     setCurrentIndex((prev) => prev + 1);
   };
 
-  const goToMaps = () => {
-    const address = currentStop?.venue?.address ?? currentStop?.venue_name;
-    if (!address) return;
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-    window.open(url, "_blank");
-  };
-
   if (!currentStop) {
     return null;
   }
@@ -99,7 +92,7 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
 
         {/* Current stop card */}
         <div className="bg-card rounded-3xl p-6 shadow-lg border border-border mb-6">
-          <div className="bg-primary/5 text-primary w-max px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-primary/10 flex items-center gap-2">
+          <div className="bg-[#FFF0F1] text-primary w-max px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-primary/10 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> IN PROGRESS
           </div>
 
@@ -121,22 +114,13 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={goToMaps}
-              className="flex-1 rounded-xl border-2 border-primary px-4 py-3.5 text-sm font-bold text-primary flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-            >
-              🗺️ Directions
-            </button>
-            <button
-              type="button"
-              onClick={markComplete}
-              className="flex-1 bg-[#00C851] text-white rounded-xl font-bold text-[17px] shadow-[0_8px_20px_-6px_rgba(0,200,81,0.5)] active:scale-[0.98] transition-all flex justify-center items-center gap-2"
-            >
-              Mark Complete <Check size={18} strokeWidth={3} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={markComplete}
+            className="w-full bg-[#00C851] text-white py-4 rounded-xl font-bold text-[17px] shadow-[0_8px_20px_-6px_rgba(0,200,81,0.5)] active:scale-[0.98] transition-all flex justify-center items-center gap-2"
+          >
+            Mark Complete <Check size={20} strokeWidth={3} />
+          </button>
         </div>
 
         {/* Up Next preview */}
@@ -149,14 +133,14 @@ export default function Screen12ExecutionTracker({ plan, stops }: Screen12Execut
               <h3 className="font-bold text-foreground">{stops[currentIndex + 1].venue_name}</h3>
             </div>
             <div className="w-10 h-10 rounded-full bg-card shadow-sm flex items-center justify-center text-lg">
-              →
+              📍
             </div>
           </div>
         )}
       </div>
 
       {/* Quick actions footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 pb-8 z-20">
+      <div className="fixed bottom-0 w-full max-w-[430px] bg-card border-t border-border p-4 pb-8 z-20">
         <div className="flex justify-around px-2">
           <button type="button" className="flex flex-col items-center gap-2 group">
             <div className="w-14 h-14 rounded-full bg-background border border-border flex items-center justify-center text-foreground group-hover:bg-border/50 transition-colors">
