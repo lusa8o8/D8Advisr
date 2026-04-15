@@ -422,7 +422,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-3 font-medium capitalize">
-                      <span>{venue.category}{venue.activity_type ? ` · ${venue.activity_type}` : ""}</span>
+                      <span className="capitalize">{venue.category}</span>
                       <span className="w-1 h-1 rounded-full bg-gray-300" />
                       <div className="flex items-center gap-1">
                         <MapPin size={12} />

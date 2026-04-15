@@ -14,7 +14,7 @@ export default function BottomNav() {
     : "";
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#EBEBEB] pb-8 pt-4 px-8 flex justify-between items-center z-20 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#EBEBEB] pb-8 pt-4 px-8 flex justify-between items-center z-10 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
       <Link
         href="/home"
         className={`flex flex-col items-center gap-1.5 transition-colors ${
