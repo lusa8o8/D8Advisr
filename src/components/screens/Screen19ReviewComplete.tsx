@@ -55,6 +55,9 @@ export default function Screen19ReviewComplete({ planId: _planId }: Screen19Revi
             </div>
           </div>
         </div>
+
+        {/* Plan credit */}
+        <p className="text-white/30 text-[12px] font-medium mt-5">D8Advisr · Lusaka</p>
       </div>
 
       {/* Actions */}

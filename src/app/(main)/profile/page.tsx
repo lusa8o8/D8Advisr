@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/ui/SignOutButton";
 import ProfileAvatar from "@/components/ui/ProfileAvatar";
-import { ChevronRight, Heart } from "lucide-react";
+import { Award, ChevronRight, Heart, Settings, Star } from "lucide-react";
 
 type RecentPlan = {
   id: string;
@@ -90,129 +90,158 @@ export default async function ProfilePage() {
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7] pb-32">
-      {/* CHANGE 1: Header with pb-20 to allow card overlap */}
-      <div className="overflow-hidden rounded-b-3xl bg-[#FF5A5F] px-6 pb-20 pt-10 text-white">
-        <div className="flex items-center gap-4">
-          <ProfileAvatar initials={initials} />
-          <div>
-            <p className="text-xl font-bold">{profile?.name ?? "Guest"}</p>
-            {memberSince && <p className="text-xs text-white/80">Member since {memberSince}</p>}
-            <p className="text-sm text-[#FFB3B5]">{profile?.email}</p>
-            <p className="text-xs">📍 Lusaka, Zambia</p>
+    <div className="min-h-screen bg-background pb-32">
+
+      {/* Header banner */}
+      <div className="bg-primary px-6 pt-14 pb-20 relative text-primary-foreground rounded-b-[40px] shadow-md">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-xl font-bold">Profile</h1>
+          <Link
+            href="/profile/preferences"
+            className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+          >
+            <Settings size={20} />
+          </Link>
+        </div>
+      </div>
+
+      <div className="px-6 -mt-16 mb-8 relative z-10">
+        {/* Profile card overlapping banner */}
+        <div className="bg-card rounded-3xl p-6 shadow-lg border border-border flex flex-col items-center">
+          {/* Avatar sits at -mt-16 to overlap the banner */}
+          <div className="relative -mt-16 mb-4">
+            <ProfileAvatar initials={initials} />
+          </div>
+
+          <h2 className="text-[22px] font-bold text-foreground">{profile?.name ?? "Guest"}</h2>
+          {memberSince && (
+            <p className="text-sm text-muted-foreground mb-6 font-medium mt-1">Member since {memberSince}</p>
+          )}
+
+          <div className="w-full grid grid-cols-3 gap-2 border-t border-border pt-5">
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-black text-foreground">{totalPlans}</span>
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center mt-1">Plans<br />Created</span>
+            </div>
+            <div className="flex flex-col items-center border-l border-r border-border">
+              <span className="text-2xl font-black text-foreground">{completedPlans}</span>
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center mt-1">Dates<br />Done</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-black text-[#00C851]">K0</span>
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center mt-1">Budget<br />Saved</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4">
-        {/* CHANGE 1: Profile stats card with -mt-16 overlap */}
-        {/* CHANGE 2 + 3: Stats colors and border separators */}
-        <div className="-mt-16 relative z-10 bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-[#EBEBEB] p-6">
-          <div className="w-full grid grid-cols-3 gap-2 border-t border-[#EBEBEB] pt-5">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-[#222222]">{totalPlans}</p>
-              <p className="text-xs text-[#555555] mt-1">Plans Created</p>
-            </div>
-            <div className="text-center border-l border-r border-[#EBEBEB]">
-              <p className="text-2xl font-bold text-[#222222]">{completedPlans}</p>
-              <p className="text-xs text-[#555555] mt-1">Dates Done</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-[#00C851]">K0</p>
-              <p className="text-xs text-[#555555] mt-1">Budget Saved</p>
+      <div className="px-6 pb-6 flex flex-col gap-6">
+
+        {/* Badges */}
+        <div>
+          <div className="flex justify-between items-center mb-4 px-1">
+            <h3 className="text-[17px] font-bold text-foreground">Badges</h3>
+            <Link href="/badges" className="text-sm font-semibold text-primary">View All</Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+            {[
+              { emoji: "🔥", label: "Streak x3" },
+              { emoji: "🍕", label: "Foodie" },
+              { emoji: "💰", label: "Saver" },
+            ].map((badge) => (
+              <div key={badge.label} className="bg-card min-w-[85px] h-[85px] rounded-2xl flex flex-col items-center justify-center gap-1.5 shadow-sm border border-border shrink-0">
+                <span className="text-3xl">{badge.emoji}</span>
+                <span className="text-[11px] font-bold text-foreground">{badge.label}</span>
+              </div>
+            ))}
+            {/* Locked slot */}
+            <div className="bg-background min-w-[85px] h-[85px] rounded-2xl flex flex-col items-center justify-center gap-1.5 border border-dashed border-border opacity-60 shrink-0">
+              <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center text-muted-foreground mb-0.5">
+                <Award size={14} />
+              </div>
+              <span className="text-[11px] font-medium text-muted-foreground">Locked</span>
             </div>
           </div>
         </div>
 
-        {/* Badges preview */}
-        <section className="rounded-2xl border border-[#EBEBEB] bg-white p-4 shadow-sm">
-          <header className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-[#222222]">Badges</p>
-            <Link href="/badges" className="text-xs font-semibold text-[#FF5A5F]">
-              View All
-            </Link>
-          </header>
-          <div className="flex gap-3">
-            {["🔥", "🍕", "💰"].map((emoji) => (
-              <div key={emoji} className="flex-1 flex flex-col items-center gap-1 bg-[#F7F7F7] rounded-xl py-3">
-                <span className="text-2xl">{emoji}</span>
+        {/* Menu */}
+        <div className="bg-card rounded-3xl p-2 shadow-sm border border-border">
+          <Link
+            href="/profile/preferences"
+            className="w-full flex items-center justify-between p-4 border-b border-border hover:bg-background transition-colors rounded-t-2xl"
+          >
+            <div className="flex items-center gap-4 text-foreground">
+              <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center text-muted-foreground border border-border">
+                <Heart size={18} />
               </div>
-            ))}
-          </div>
-          <p className="text-[11px] text-[#888888] text-center mt-2">3 badges earned</p>
-        </section>
+              <span className="font-semibold text-[16px]">My Preferences</span>
+            </div>
+            <ChevronRight size={20} className="text-muted-foreground" />
+          </Link>
+          <Link
+            href="/budget"
+            className="w-full flex items-center justify-between p-4 hover:bg-background transition-colors rounded-b-2xl"
+          >
+            <div className="flex items-center gap-4 text-foreground">
+              <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center text-[#00C851] border border-border">
+                <span className="font-bold text-[18px]">K</span>
+              </div>
+              <span className="font-semibold text-[16px]">Budget &amp; Sinking Fund</span>
+            </div>
+            <ChevronRight size={20} className="text-muted-foreground" />
+          </Link>
+        </div>
 
-        {/* CHANGE 4: Recent plans with emoji icon */}
-        <section className="rounded-2xl border border-[#EBEBEB] bg-white p-4 shadow-sm">
-          <header className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-[#222222]">Recent Plans</p>
-            <Link href="/plans" className="text-xs font-semibold text-[#FF5A5F]">
-              View all
-            </Link>
-          </header>
-          <div className="space-y-3">
+        {/* Recent Plans */}
+        <div>
+          <div className="flex justify-between items-center mb-4 px-1">
+            <h3 className="text-[17px] font-bold text-foreground">Recent Plans</h3>
+            <Link href="/plans" className="text-sm font-semibold text-primary">View all</Link>
+          </div>
+          <div className="flex flex-col gap-3">
             {recentPlans.map((plan) => {
               const { emoji, bg } = occasionEmoji(plan.occasion);
               return (
                 <Link
                   key={plan.id}
                   href={`/plans/${plan.id}`}
-                  className="bg-white p-4 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#EBEBEB] flex items-center justify-between"
+                  className="bg-card p-4 rounded-2xl shadow-sm border border-border flex items-center justify-between hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center text-2xl shrink-0`}>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-14 h-14 rounded-2xl ${bg} flex items-center justify-center text-2xl shrink-0 border border-primary/10`}>
                       {emoji}
                     </div>
                     <div>
-                      <p className="font-bold text-[#222222] text-sm">{plan.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <h4 className="font-bold text-foreground text-[16px]">{plan.title}</h4>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 font-medium">
                         {plan.rating ? (
-                          <span className="text-xs font-semibold text-[#FF9500]">⭐ {plan.rating.toFixed(1)}</span>
+                          <>
+                            <Star size={12} className="fill-[#FF9500] text-[#FF9500]" />
+                            <span className="font-bold text-foreground">{plan.rating.toFixed(1)}</span>
+                            <span>·</span>
+                          </>
                         ) : null}
-                        <span className="text-xs text-[#555555]">
+                        <span>
                           {new Date(plan.created_at).toLocaleString("en-US", { month: "short", day: "numeric" })}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <ChevronRight size={18} className="text-[#999999] shrink-0" />
+                  <ChevronRight size={20} className="text-muted-foreground shrink-0" />
                 </Link>
               );
             })}
-            {!recentPlans.length && <p className="text-xs text-[#888888]">No recent plans</p>}
+            {!recentPlans.length && (
+              <p className="text-sm text-muted-foreground px-1">No plans yet — start your first date night!</p>
+            )}
           </div>
-        </section>
-
-        {/* CHANGE 5: Merged menu card */}
-        <div className="bg-white rounded-3xl p-2 shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#EBEBEB]">
-          <Link
-            href="/profile/preferences"
-            className="w-full flex items-center justify-between p-4 border-b border-[#F7F7F7]"
-          >
-            <div className="flex items-center gap-3 text-[#222222]">
-              <div className="w-8 h-8 rounded-full bg-[#F7F7F7] flex items-center justify-center text-[#555555]">
-                <Heart size={16} />
-              </div>
-              <span className="font-semibold text-[15px]">My Preferences</span>
-            </div>
-            <ChevronRight size={18} className="text-[#999999]" />
-          </Link>
-          <Link
-            href="/budget"
-            className="w-full flex items-center justify-between p-4"
-          >
-            <div className="flex items-center gap-3 text-[#222222]">
-              <div className="w-8 h-8 rounded-full bg-[#F7F7F7] flex items-center justify-center text-[#00C851]">
-                <span className="font-bold text-sm">$</span>
-              </div>
-              <span className="font-semibold text-[15px]">Budget &amp; Sinking Fund</span>
-            </div>
-            <ChevronRight size={18} className="text-[#999999]" />
-          </Link>
         </div>
 
-        {/* CHANGE 6: Subtle sign out */}
-        <SignOutButton />
+        {/* Sign Out */}
+        <div className="pt-2 pb-2">
+          <SignOutButton />
+          <p className="text-center text-[11px] text-muted-foreground mt-3 font-medium">D8Advisr · v1.0</p>
+        </div>
       </div>
     </div>
   );

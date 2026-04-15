@@ -14,10 +14,12 @@ type Screen15PreferencesProps = {
 };
 
 const VIBES = ["Romantic", "Fun", "Chill", "Adventurous", "Cultural", "Foodie", "Nightlife", "Outdoors"];
+const ACTIVITY_TYPES = ["Outdoors", "Live Music", "Museums", "Nightlife", "Workouts", "Food Tours", "Art & Culture", "Sports"];
 
 export default function Screen15Preferences({ defaultVibes, budget, groupSize }: Screen15PreferencesProps) {
   const router = useRouter();
   const [selectedVibes, setSelectedVibes] = useState<string[]>(defaultVibes);
+  const [selectedActivityTypes, setSelectedActivityTypes] = useState<string[]>(["Live Music", "Outdoors"]);
   const [currentBudget, setCurrentBudget] = useState(budget ?? 150);
   const [currentGroupSize, setCurrentGroupSize] = useState(groupSize);
   const [isSaving, setIsSaving] = useState(false);
@@ -25,6 +27,12 @@ export default function Screen15Preferences({ defaultVibes, budget, groupSize }:
   const toggleVibe = (vibe: string) => {
     setSelectedVibes((current) =>
       current.includes(vibe) ? current.filter((item) => item !== vibe) : [...current, vibe]
+    );
+  };
+
+  const toggleActivityType = (type: string) => {
+    setSelectedActivityTypes((current) =>
+      current.includes(type) ? current.filter((item) => item !== type) : [...current, type]
     );
   };
 
@@ -72,6 +80,31 @@ export default function Screen15Preferences({ defaultVibes, budget, groupSize }:
         <p className="text-muted-foreground text-[15px] font-medium leading-relaxed">
           Update your preferences so D8Advisr can generate perfectly tailored plans.
         </p>
+
+        {/* Activity Types */}
+        <div>
+          <h3 className="font-bold text-foreground mb-4 text-[16px]">Activity Types</h3>
+          <div className="flex flex-wrap gap-2.5">
+            {ACTIVITY_TYPES.map((type) => {
+              const selected = selectedActivityTypes.includes(type);
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => toggleActivityType(type)}
+                  className={cn(
+                    "px-4 py-2.5 rounded-full font-semibold text-sm transition-all",
+                    selected
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 border border-primary"
+                      : "bg-card text-muted-foreground border border-border"
+                  )}
+                >
+                  {type}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Vibes */}
         <div>

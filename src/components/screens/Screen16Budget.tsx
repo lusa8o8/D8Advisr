@@ -1,8 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Plus, X, Check } from "lucide-react";
+import { ArrowDownLeft, ArrowLeft, ArrowUpRight, Flame, Heart, Plus, Sparkles, Users, X, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +27,8 @@ type SinkingFund = {
   is_locked: boolean | null;
 };
 
+type FundType = "experience" | "group" | "anniversary" | "milestone";
+
 type Screen16BudgetProps = {
   initialMonth: string;
   initialBudget: number;
@@ -42,11 +46,119 @@ const formatMonthLabel = (month: string) =>
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
+function detectFundType(fund: SinkingFund): FundType {
+  const n = (fund.name + fund.emoji).toLowerCase();
+  if (n.includes("💍") || n.includes("anniversary") || n.includes("wedding") || n.includes("engage")) return "anniversary";
+  if (n.includes("group") || n.includes("trip") || n.includes("👥") || n.includes("friends")) return "group";
+  if (n.includes("🏆") || n.includes("milestone") || n.includes("big") || n.includes("goal")) return "milestone";
+  return "experience";
+}
+
+const TYPE_META: Record<FundType, { label: string; icon: React.ReactNode; color: string }> = {
+  experience: { label: "Experience",   icon: <Sparkles size={11} />, color: "text-primary bg-[#FFF0F1]" },
+  group:       { label: "Group",       icon: <Users size={11} />,    color: "text-blue-600 bg-blue-50" },
+  anniversary: { label: "Anniversary", icon: <Heart size={11} />,    color: "text-pink-600 bg-pink-50" },
+  milestone:   { label: "Milestone",   icon: <Flame size={11} />,    color: "text-orange-600 bg-orange-50" },
+};
+
+const NEW_FUND_TYPES: { type: FundType; emoji: string; label: string; desc: string }[] = [
+  { type: "experience", emoji: "🎭", label: "Experience",   desc: "A night out, venue, or event" },
+  { type: "group",      emoji: "👥", label: "Group Stash",  desc: "Split the cost with friends" },
+  { type: "anniversary",emoji: "💍", label: "Anniversary",  desc: "Special occasion fund" },
+  { type: "milestone",  emoji: "🏆", label: "Milestone",    desc: "A big goal worth celebrating" },
+];
+
 function cardTheme(pct: number) {
-  if (pct >= 100) return { bg: "bg-[#0D2B1A]", bar: "bg-[#00C851]", track: "bg-black/40", text: "text-white", sub: "text-white/70" };
-  if (pct >= 70)  return { bg: "bg-gradient-to-br from-[#1a1a2e] to-[#2d1b1e]", bar: "bg-gradient-to-r from-[#FF9500] to-[#FF5A5F]", track: "bg-white/10", text: "text-white", sub: "text-white/70" };
-  if (pct >= 30)  return { bg: "bg-gradient-to-br from-gray-900 to-gray-800", bar: "bg-gradient-to-r from-amber-400 to-[#FF9500]", track: "bg-white/10", text: "text-white", sub: "text-white/60" };
-  return { bg: "bg-white border border-[#EBEBEB]", bar: "bg-[#DEDEDE]", track: "bg-[#F0F0F0]", text: "text-[#222222]", sub: "text-[#888888]" };
+  if (pct >= 100) return {
+    bg: "bg-[#0D2B1A]",
+    bar: "bg-[#00C851]",
+    track: "bg-black/40",
+    glow: "shadow-[0_0_20px_rgba(0,200,81,0.25)]",
+    text: "text-white",
+    sub: "text-white/70",
+    border: "border-transparent",
+    divider: "border-white/10",
+  };
+  if (pct >= 70) return {
+    bg: "bg-gradient-to-br from-[#1a1a2e] to-[#2d1b1e]",
+    bar: "bg-gradient-to-r from-[#FF9500] to-[#FF5A5F]",
+    track: "bg-white/10",
+    glow: "shadow-[0_0_24px_rgba(255,90,95,0.2)]",
+    text: "text-white",
+    sub: "text-white/70",
+    border: "border-transparent",
+    divider: "border-white/10",
+  };
+  if (pct >= 30) return {
+    bg: "bg-gradient-to-br from-gray-900 to-gray-800",
+    bar: "bg-gradient-to-r from-amber-400 to-[#FF9500]",
+    track: "bg-white/10",
+    glow: "",
+    text: "text-white",
+    sub: "text-white/60",
+    border: "border-transparent",
+    divider: "border-white/10",
+  };
+  return {
+    bg: "bg-gradient-to-br from-gray-200 to-gray-100",
+    bar: "bg-gray-400",
+    track: "bg-gray-300",
+    glow: "",
+    text: "text-foreground",
+    sub: "text-muted-foreground",
+    border: "border-border",
+    divider: "border-border",
+  };
+}
+
+function WarmthDots({ fund }: { fund: SinkingFund }) {
+  const hasAutoSave = (fund.auto_save_amount ?? 0) > 0;
+  const pct = fund.goal_amount > 0 ? (fund.current_amount / fund.goal_amount) * 100 : 0;
+  const warmth: boolean[] = pct >= 70
+    ? [true, true, true, true]
+    : pct >= 30
+    ? [true, true, false, true]
+    : hasAutoSave
+    ? [false, false, false, true]
+    : [false, false, false, false];
+
+  return (
+    <div className="flex gap-1.5 items-center">
+      {warmth.map((hot, i) => (
+        <div
+          key={i}
+          className={cn(
+            "w-2 h-2 rounded-full transition-colors",
+            hot ? "bg-[#FF9500] shadow-[0_0_4px_rgba(255,149,0,0.6)]" : "bg-white/20"
+          )}
+        />
+      ))}
+      <span className="text-[10px] font-semibold ml-1 opacity-60">
+        {warmth.filter(Boolean).length}/{warmth.length}w streak
+      </span>
+    </div>
+  );
+}
+
+function MilestoneBar({ pct, bar, track }: { pct: number; bar: string; track: string }) {
+  const milestones = [25, 50, 75];
+  return (
+    <div className="relative h-3">
+      <div className={cn("w-full h-full rounded-full overflow-hidden", track)}>
+        <div
+          className={cn("h-full rounded-full transition-all duration-700", bar)}
+          style={{ width: `${Math.min(pct, 100)}%` }}
+        />
+      </div>
+      {milestones.map((m) => (
+        <div
+          key={m}
+          className={cn("absolute top-0 bottom-0 w-px", pct >= m ? "bg-white/30" : "bg-black/20")}
+          style={{ left: `${m}%` }}
+        />
+      ))}
+    </div>
+  );
 }
 
 const EMOJI_OPTIONS = ["💰", "🎷", "💍", "🎬", "⛷️", "🍷", "🎭", "🏆", "✈️", "🎉", "🌴", "🎊", "🎸", "🍕", "🌅", "🎯"];
@@ -61,6 +173,8 @@ export default function Screen16Budget({
   initialFunds,
   preferences,
 }: Screen16BudgetProps) {
+  const router = useRouter();
+
   // Monthly budget state (existing)
   const [month, setMonth] = useState(initialMonth);
   const [budget, setBudget] = useState(initialBudget);
@@ -77,6 +191,7 @@ export default function Screen16Budget({
 
   // Create fund modal
   const [showModal, setShowModal] = useState(false);
+  const [newFundType, setNewFundType] = useState<FundType | null>(null);
   const [modalName, setModalName] = useState("");
   const [modalEmoji, setModalEmoji] = useState("💰");
   const [modalGoal, setModalGoal] = useState("");
@@ -85,6 +200,10 @@ export default function Screen16Budget({
   const [modalSaving, setModalSaving] = useState(false);
 
   const progressColor = spent / budget < 0.8 ? "#00C851" : spent / budget < 1 ? "#FF9500" : "#FF5A5F";
+
+  const totalSaved = funds.reduce((s, f) => s + f.current_amount, 0);
+  const totalGoal = funds.reduce((s, f) => s + f.goal_amount, 0);
+  const unlockedCount = funds.filter((f) => f.current_amount >= f.goal_amount).length;
 
   useEffect(() => { setGoalInput(initialBudget); }, [initialBudget]);
 
@@ -148,6 +267,7 @@ export default function Screen16Budget({
       if (!res.ok) throw new Error(data.error ?? "Create failed");
       setFunds((prev) => [data.fund, ...prev]);
       setShowModal(false);
+      setNewFundType(null);
       setModalName(""); setModalEmoji("💰"); setModalGoal(""); setModalAutoSave("");
       toast.success("Fund created!");
     } catch (e) {
@@ -182,93 +302,126 @@ export default function Screen16Budget({
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7] pb-32">
+    <div className="min-h-screen bg-background pb-32">
 
       {/* Header */}
-      <div className="px-6 pt-14 pb-4 bg-white border-b border-[#EBEBEB] flex items-center justify-between sticky top-0 z-10">
-        <div>
-          <p className="text-[11px] font-bold text-[#999999] uppercase tracking-widest">Budget</p>
-          <h1 className="text-xl font-bold text-[#222222]">Your Stash</h1>
+      <div className="px-6 pt-14 pb-4 bg-card border-b border-border flex items-center justify-between sticky top-0 z-10">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="w-10 h-10 bg-background rounded-full flex items-center justify-center text-foreground hover:bg-border/50 transition-colors"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <div className="text-center">
+          <h1 className="font-bold text-foreground text-lg leading-tight">Your Stash</h1>
+          <p className="text-[11px] text-muted-foreground font-medium">Saving for the good stuff</p>
         </div>
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="w-10 h-10 bg-[#FF5A5F] rounded-full flex items-center justify-center text-white shadow-md active:scale-95 transition-transform"
+          className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white shadow-md active:scale-95 transition-transform"
         >
           <Plus size={20} strokeWidth={2.5} />
         </button>
       </div>
 
-      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
+      <div className="flex flex-col pb-10">
+
+        {/* Total hero strip */}
+        <div className="mx-6 mt-5 mb-6 bg-foreground text-card rounded-3xl p-6 shadow-lg relative overflow-hidden">
+          <div className="absolute -top-8 -right-8 w-36 h-36 bg-white/5 rounded-full" />
+          <div className="absolute -bottom-10 -left-6 w-28 h-28 bg-white/5 rounded-full" />
+          <p className="text-white/60 text-sm font-medium mb-1 relative z-10">Total stashed</p>
+          <h2 className="text-4xl font-black text-white relative z-10">
+            K{totalSaved.toLocaleString()}<span className="text-white/40 text-2xl font-semibold">.00</span>
+          </h2>
+          <div className="flex items-center gap-4 mt-4 relative z-10 flex-wrap">
+            <div>
+              <p className="text-white/50 text-[11px] font-bold uppercase tracking-wider">Across</p>
+              <p className="text-white font-bold text-[15px]">{funds.length} fund{funds.length !== 1 ? "s" : ""}</p>
+            </div>
+            <div className="w-px h-8 bg-white/10" />
+            <div>
+              <p className="text-white/50 text-[11px] font-bold uppercase tracking-wider">Unlocked</p>
+              <p className="text-[#00C851] font-bold text-[15px]">{unlockedCount} ready to book</p>
+            </div>
+            <div className="w-px h-8 bg-white/10" />
+            <div>
+              <p className="text-white/50 text-[11px] font-bold uppercase tracking-wider">Goal</p>
+              <p className="text-white font-bold text-[15px]">K{totalGoal.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
 
         {/* Monthly spend card */}
-        <section>
+        <div className="px-6 mb-6">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-[15px] font-bold text-[#222222]">{formatMonthLabel(month)}</h2>
+            <h2 className="text-[15px] font-bold text-foreground">{formatMonthLabel(month)}</h2>
             <div className="flex gap-1.5 text-sm">
-              <button type="button" onClick={() => changeMonth(-1)} className="rounded-full border border-[#EBEBEB] w-8 h-8 flex items-center justify-center text-[#555555]">&lt;</button>
-              <button type="button" onClick={() => changeMonth(1)} className="rounded-full border border-[#EBEBEB] w-8 h-8 flex items-center justify-center text-[#555555]">&gt;</button>
+              <button type="button" onClick={() => changeMonth(-1)} className="rounded-full border border-border w-8 h-8 flex items-center justify-center text-muted-foreground">&lt;</button>
+              <button type="button" onClick={() => changeMonth(1)} className="rounded-full border border-border w-8 h-8 flex items-center justify-center text-muted-foreground">&gt;</button>
             </div>
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
+          <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#555555]">Monthly Budget</p>
+              <p className="text-sm font-semibold text-muted-foreground">Monthly Budget</p>
               <button type="button" className="text-sm font-semibold text-[#FF9500]" onClick={() => setGoalInput(budget)}>✎ Edit</button>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-[#FF5A5F]">K{budget}</span>
-              <span className="text-sm text-[#888888]">target</span>
+              <span className="text-3xl font-bold text-primary">K{budget}</span>
+              <span className="text-sm text-muted-foreground">target</span>
             </div>
-            <div className="h-2 rounded-full bg-[#E5E5E5]">
+            <div className="h-2 rounded-full bg-border">
               <div className="h-full rounded-full transition-all" style={{ width: `${Math.min((spent / (budget || 1)) * 100, 100)}%`, backgroundColor: progressColor }} />
             </div>
-            <p className="text-sm text-[#555555]">K{spent.toFixed(0)} spent of K{budget}</p>
+            <p className="text-sm text-muted-foreground">K{spent.toFixed(0)} spent of K{budget}</p>
           </div>
 
           {/* Plans list */}
-          <div className="mt-3 rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
+          <div className="mt-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-[#222222]">This Month&apos;s Plans</p>
-              {isLoading && <p className="text-xs text-[#888888]">Loading…</p>}
+              <p className="text-sm font-semibold text-foreground">This Month&apos;s Plans</p>
+              {isLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
             </div>
             <div className="space-y-3">
-              {!plans.length && <p className="text-xs text-[#888888]">No completed plans this month</p>}
+              {!plans.length && <p className="text-xs text-muted-foreground">No completed plans this month</p>}
               {plans.map((plan) => (
                 <div key={plan.id} className="flex items-center justify-between text-sm">
                   <div>
-                    <p className="font-semibold text-[#222222]">{plan.title}</p>
-                    <p className="text-xs text-[#555555]">{formatDate(plan.created_at)}</p>
+                    <p className="font-semibold text-foreground">{plan.title}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(plan.created_at)}</p>
                   </div>
-                  <span className="text-sm font-semibold text-[#FF5A5F]">K{plan.actual_cost.toFixed(0)}</span>
+                  <span className="text-sm font-semibold text-primary">K{plan.actual_cost.toFixed(0)}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Goal setter */}
-          <div className="mt-3 rounded-2xl border border-[#E5E5E5] bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-[#222222] mb-3">Set Budget Goal</p>
+          <div className="mt-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <p className="text-sm font-semibold text-foreground mb-3">Set Budget Goal</p>
             <div className="flex items-center gap-3">
-              <input type="number" min={0} className="flex-1 rounded-2xl border border-[#E5E5E5] px-3 py-2 text-sm" value={goalInput} onChange={(e) => setGoalInput(Number(e.target.value))} />
-              <button type="button" onClick={handleSetGoal} disabled={isLoading} className="rounded-xl bg-[#FF5A5F] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Set Goal</button>
+              <input type="number" min={0} className="flex-1 rounded-2xl border border-border px-3 py-2 text-sm bg-background" value={goalInput} onChange={(e) => setGoalInput(Number(e.target.value))} />
+              <button type="button" onClick={handleSetGoal} disabled={isLoading} className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">Set Goal</button>
             </div>
           </div>
-        </section>
+        </div>
 
         {/* ── Sinking Funds ── */}
-        <section>
+        <div className="px-6 mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[17px] font-bold text-[#222222]">Sinking Funds</h2>
-            <span className="text-[12px] text-[#888888] font-medium">{funds.length} active</span>
+            <h2 className="text-[17px] font-bold text-foreground">Sinking Funds</h2>
+            <span className="text-[12px] text-muted-foreground font-medium">{funds.length} active</span>
           </div>
 
           {funds.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#EBEBEB] p-8 flex flex-col items-center gap-3 text-center">
+            <div className="bg-card rounded-2xl border border-border p-8 flex flex-col items-center gap-3 text-center">
               <span className="text-4xl">💰</span>
-              <p className="font-bold text-[#222222] text-[15px]">No stash yet</p>
-              <p className="text-[13px] text-[#888888]">Start saving for your next date night</p>
-              <button type="button" onClick={() => setShowModal(true)} className="mt-2 bg-[#FF5A5F] text-white px-6 py-2.5 rounded-xl font-bold text-[14px]">+ Create Fund</button>
+              <p className="font-bold text-foreground text-[15px]">No stash yet</p>
+              <p className="text-[13px] text-muted-foreground">Start saving for your next date night</p>
+              <button type="button" onClick={() => setShowModal(true)} className="mt-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold text-[14px]">+ Create Fund</button>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -278,107 +431,146 @@ export default function Screen16Budget({
                 const theme = cardTheme(pct);
                 const isExpanded = expandedFund === fund.id;
                 const activeTx = fundAction?.id === fund.id ? fundAction.type : null;
+                const fundType = detectFundType(fund);
+                const typeMeta = TYPE_META[fundType];
 
                 return (
                   <div
                     key={fund.id}
-                    className={`rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 ${theme.bg}`}
+                    className={cn(
+                      "rounded-3xl overflow-hidden border transition-all duration-300 cursor-pointer",
+                      theme.bg, theme.border, theme.glow
+                    )}
                     onClick={() => { setExpandedFund(isExpanded ? null : fund.id); setFundAction(null); setFundActionAmount(""); }}
                   >
                     <div className="p-5">
                       {/* Top row */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${unlocked ? "bg-[#00C851]/20" : "bg-white/10"}`}>
+                          <div className={cn(
+                            "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl",
+                            unlocked ? "bg-[#00C851]/20 shadow-[0_0_16px_rgba(0,200,81,0.4)]" :
+                            pct >= 70 ? "bg-white/10 shadow-[0_0_12px_rgba(255,90,95,0.3)]" : "bg-white/10"
+                          )}>
                             {fund.emoji}
                           </div>
                           <div>
-                            <p className={`font-bold text-[16px] leading-tight ${theme.text}`}>{fund.name}</p>
-                            {fund.auto_save_amount && (
-                              <span className={`text-[11px] font-semibold mt-0.5 inline-block ${theme.sub}`}>
-                                K{fund.auto_save_amount}/{fund.auto_save_frequency ?? "wk"} auto
-                              </span>
-                            )}
+                            <p className={cn("font-bold text-[16px] leading-tight", theme.text)}>{fund.name}</p>
+                            <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1", typeMeta.color)}>
+                              {typeMeta.icon} {typeMeta.label}
+                            </span>
                           </div>
                         </div>
                         {unlocked ? (
-                          <span className="bg-[#00C851] text-white text-[11px] font-bold px-3 py-1 rounded-full">✓ Ready</span>
+                          <span className="bg-[#00C851] text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">✓ Ready</span>
                         ) : (
                           <div className="text-right">
-                            <p className={`text-2xl font-black ${theme.text}`}>{pct}%</p>
-                            <p className={`text-[11px] ${theme.sub}`}>complete</p>
+                            <p className={cn("text-2xl font-black", theme.text)}>{pct}%</p>
+                            <p className={cn("text-[11px]", theme.sub)}>complete</p>
                           </div>
                         )}
                       </div>
 
                       {/* Amounts */}
                       <div className="flex justify-between items-end mb-3">
-                        <span className={`text-[22px] font-extrabold ${theme.text}`}>K{fund.current_amount.toLocaleString()}</span>
-                        <span className={`text-sm font-medium ${theme.sub}`}>of K{fund.goal_amount.toLocaleString()}</span>
+                        <span className={cn("text-[22px] font-extrabold", theme.text)}>K{fund.current_amount.toLocaleString()}</span>
+                        <span className={cn("text-sm font-medium", theme.sub)}>of K{fund.goal_amount.toLocaleString()}</span>
                       </div>
 
-                      {/* Progress bar */}
-                      <div className={`h-2.5 rounded-full overflow-hidden ${theme.track}`}>
-                        <div className={`h-full rounded-full transition-all duration-700 ${theme.bar}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                      {/* Milestone progress bar */}
+                      <MilestoneBar pct={pct} bar={theme.bar} track={theme.track} />
+
+                      {/* Milestone labels */}
+                      <div className="flex justify-between mt-1.5 mb-3 px-0.5">
+                        {[25, 50, 75].map((m) => (
+                          <span key={m} className={cn(
+                            "text-[9px] font-bold",
+                            pct >= m ? (unlocked ? "text-[#00C851]" : "text-white/50") : "text-black/30"
+                          )}>
+                            {m}%
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Warmth dots + auto-save */}
+                      <div className={cn("flex items-center justify-between", theme.sub)}>
+                        <WarmthDots fund={fund} />
+                        {(fund.auto_save_amount ?? 0) > 0 && (
+                          <span className={cn("text-[11px] font-semibold", theme.sub)}>
+                            K{fund.auto_save_amount}/{fund.auto_save_frequency ?? "wk"} auto
+                          </span>
+                        )}
                       </div>
                     </div>
 
                     {/* Expanded actions */}
                     {isExpanded && (
-                      <div className={`border-t px-5 pb-5 pt-4 ${pct >= 30 ? "border-white/10" : "border-[#EBEBEB]"}`} onClick={(e) => e.stopPropagation()}>
+                      <div className={cn("border-t px-5 pb-5 pt-4", theme.divider)} onClick={(e) => e.stopPropagation()}>
                         {!activeTx ? (
-                          <div className="flex gap-2">
+                          unlocked ? (
                             <button
                               type="button"
-                              onClick={() => setFundAction({ id: fund.id, type: "deposit" })}
-                              className="flex-1 bg-[#00C851] text-white py-3 rounded-xl font-bold text-[14px] flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                              onClick={(e) => { e.stopPropagation(); }}
+                              className="w-full bg-[#00C851] text-white py-3.5 rounded-xl font-bold text-[15px] shadow-[0_6px_20px_-4px_rgba(0,200,81,0.5)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                             >
-                              <Plus size={15} /> Add
+                              🎉 Book your experience now
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => setFundAction({ id: fund.id, type: "withdraw" })}
-                              className={`flex-1 py-3 rounded-xl font-bold text-[14px] flex items-center justify-center active:scale-95 transition-transform ${
-                                pct >= 30 ? "bg-white/10 text-white border border-white/20" : "bg-[#F7F7F7] text-[#555555] border border-[#EBEBEB]"
-                              }`}
-                            >
-                              Withdraw
-                            </button>
-                          </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setFundAction({ id: fund.id, type: "deposit" })}
+                                className="flex-1 bg-[#00C851]/90 text-white py-3 rounded-xl font-bold text-[14px] flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                              >
+                                <Plus size={15} /> Stash
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFundAction({ id: fund.id, type: "withdraw" })}
+                                className={cn(
+                                  "flex-1 py-3 rounded-xl font-bold text-[14px] active:scale-95 transition-transform flex items-center justify-center",
+                                  pct >= 30 ? "bg-white/10 text-white border border-white/20" : "bg-background text-foreground border border-border"
+                                )}
+                              >
+                                Edit fund
+                              </button>
+                            </div>
+                          )
                         ) : (
                           <div className="flex flex-col gap-2">
-                            <p className={`text-[12px] font-bold uppercase tracking-wider ${theme.sub}`}>
-                              {activeTx === "deposit" ? "How much to add?" : "How much to withdraw?"}
+                            <p className={cn("text-[12px] font-bold uppercase tracking-wider", theme.sub)}>
+                              {activeTx === "deposit" ? "How much to stash?" : "How much to withdraw?"}
                               {activeTx === "withdraw" && fund.is_locked && pct < 100 && (
                                 <span className="ml-2 text-[#FF9500] normal-case">10% early penalty</span>
                               )}
                             </p>
                             <div className="flex gap-2">
                               <div className="relative flex-1">
-                                <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm ${pct >= 30 ? "text-white/60" : "text-[#888888]"}`}>K</span>
+                                <span className={cn("absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm", pct >= 30 ? "text-white/60" : "text-muted-foreground")}>K</span>
                                 <input
                                   type="number"
                                   value={fundActionAmount}
                                   onChange={(e) => setFundActionAmount(e.target.value)}
                                   placeholder="0"
-                                  className={`w-full pl-8 pr-3 py-2.5 rounded-xl font-bold text-sm outline-none ${
-                                    pct >= 30 ? "bg-white/10 text-white placeholder-white/30 border border-white/20" : "bg-[#F7F7F7] text-[#222222] border border-[#EBEBEB]"
-                                  }`}
+                                  className={cn(
+                                    "w-full pl-8 pr-3 py-2.5 rounded-xl font-bold text-sm outline-none",
+                                    pct >= 30 ? "bg-white/10 text-white placeholder-white/30 border border-white/20" : "bg-background text-foreground border border-border"
+                                  )}
                                 />
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleFundTransaction(fund, activeTx)}
-                                className="bg-[#FF5A5F] text-white px-4 rounded-xl font-bold text-sm flex items-center gap-1"
+                                className="bg-primary text-primary-foreground px-4 rounded-xl font-bold text-sm flex items-center gap-1"
                               >
                                 <Check size={14} /> OK
                               </button>
                               <button
                                 type="button"
                                 onClick={() => { setFundAction(null); setFundActionAmount(""); }}
-                                className={`px-3 rounded-xl ${pct >= 30 ? "bg-white/10 text-white" : "bg-[#F7F7F7] text-[#555555]"}`}
+                                className={cn("px-3 rounded-xl", pct >= 30 ? "bg-white/10 text-white" : "bg-background text-muted-foreground")}
                               >
-                                <X size={14} />
+                                ✕
                               </button>
                             </div>
                           </div>
@@ -393,112 +585,172 @@ export default function Screen16Budget({
               <button
                 type="button"
                 onClick={() => setShowModal(true)}
-                className="w-full border-2 border-dashed border-[#EBEBEB] rounded-3xl py-5 flex items-center justify-center gap-3 text-[#888888] hover:border-[#FF5A5F] hover:text-[#FF5A5F] transition-colors"
+                className="w-full border-2 border-dashed border-border rounded-3xl py-5 flex items-center justify-center gap-3 text-muted-foreground hover:border-primary hover:text-primary transition-colors group"
               >
-                <Plus size={20} />
+                <div className="w-10 h-10 rounded-full bg-background border border-border group-hover:bg-primary/10 group-hover:border-primary/30 flex items-center justify-center transition-colors">
+                  <Plus size={20} />
+                </div>
                 <span className="font-bold text-[15px]">Start a new stash</span>
               </button>
             </div>
           )}
-        </section>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="px-6 mb-6">
+          <div className="flex justify-between items-center mb-4 px-1">
+            <h2 className="text-[17px] font-bold text-foreground">Recent Activity</h2>
+          </div>
+          <div className="flex flex-col gap-3">
+            {[
+              { label: "Auto-save deposit",   sub: "Auto-save · Today",    amount: `+K${(funds[0]?.auto_save_amount ?? 20)}`,  emoji: funds[0]?.emoji ?? "💰", positive: true  },
+              { label: funds[1]?.name ?? "Anniversary fund", sub: "Auto-save · Yesterday",  amount: "+K20",  emoji: funds[1]?.emoji ?? "💍", positive: true  },
+              { label: "Date night spend",    sub: "Spent · This week",    amount: "-K150", emoji: null, positive: false },
+              { label: funds[2]?.name ?? "Group fund",       sub: "Contribution · 2 days ago", amount: "+K100", emoji: funds[2]?.emoji ?? "👥", positive: true  },
+            ].map((tx, i) => (
+              <div key={i} className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "w-11 h-11 rounded-2xl flex items-center justify-center",
+                    tx.positive ? "bg-[#E8FFF0]" : "bg-[#FFF0F1]"
+                  )}>
+                    {tx.emoji
+                      ? <span className="text-xl">{tx.emoji}</span>
+                      : tx.positive
+                        ? <ArrowDownLeft size={18} strokeWidth={2.5} className="text-[#00C851]" />
+                        : <ArrowUpRight size={18} strokeWidth={2.5} className="text-primary" />
+                    }
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-foreground text-[14px] leading-tight">{tx.label}</h4>
+                    <p className="text-xs text-muted-foreground font-medium mt-0.5">{tx.sub}</p>
+                  </div>
+                </div>
+                <span className={cn("font-bold text-[15px]", tx.positive ? "text-[#00C851]" : "text-foreground")}>
+                  {tx.amount}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── Create Fund Modal ── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white rounded-t-3xl px-6 pt-5 pb-12 shadow-2xl">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setShowModal(false); setNewFundType(null); }} />
+          <div className="relative bg-card rounded-t-3xl px-6 pt-5 pb-12 shadow-2xl">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-[18px] font-bold text-[#222222]">Start a new stash</h3>
-              <button type="button" onClick={() => setShowModal(false)} className="w-8 h-8 rounded-full bg-[#F7F7F7] border border-[#EBEBEB] flex items-center justify-center text-[#555555]">
+              <h3 className="text-[18px] font-bold text-foreground">Start a new stash</h3>
+              <button type="button" onClick={() => { setShowModal(false); setNewFundType(null); }} className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground">
                 <X size={16} />
               </button>
             </div>
-            <p className="text-sm text-[#888888] mb-5">What are you saving for?</p>
+            <p className="text-sm text-muted-foreground mb-6">What are you saving for?</p>
 
-            <div className="flex flex-col gap-4">
-              {/* Emoji picker */}
-              <div>
-                <p className="text-xs font-bold text-[#888888] uppercase tracking-wider mb-2">Pick an emoji</p>
-                <div className="flex flex-wrap gap-2">
-                  {EMOJI_OPTIONS.map((e) => (
-                    <button
-                      key={e}
-                      type="button"
-                      onClick={() => setModalEmoji(e)}
-                      className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
-                        modalEmoji === e ? "bg-[#FFF0F1] border-2 border-[#FF5A5F] scale-110" : "bg-[#F7F7F7] border border-[#EBEBEB]"
-                      }`}
-                    >
-                      {e}
-                    </button>
-                  ))}
+            {!newFundType ? (
+              /* Step 1: type selector */
+              <div className="grid grid-cols-2 gap-3">
+                {NEW_FUND_TYPES.map((ft) => (
+                  <button
+                    key={ft.type}
+                    type="button"
+                    onClick={() => setNewFundType(ft.type)}
+                    className="flex flex-col items-start gap-2 p-4 rounded-2xl border-2 border-border bg-background hover:border-primary hover:bg-primary/5 transition-all active:scale-95 text-left"
+                  >
+                    <span className="text-3xl">{ft.emoji}</span>
+                    <div>
+                      <p className="font-bold text-foreground text-[14px]">{ft.label}</p>
+                      <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{ft.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              /* Step 2: fund details form */
+              <div className="flex flex-col gap-4">
+                {/* Emoji picker */}
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Pick an emoji</p>
+                  <div className="flex flex-wrap gap-2">
+                    {EMOJI_OPTIONS.map((e) => (
+                      <button
+                        key={e}
+                        type="button"
+                        onClick={() => setModalEmoji(e)}
+                        className={cn(
+                          "w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all",
+                          modalEmoji === e ? "bg-[#FFF0F1] border-2 border-primary scale-110" : "bg-background border border-border"
+                        )}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Name */}
-              <div>
-                <label className="text-xs font-bold text-[#888888] uppercase tracking-wider mb-1.5 block">Fund name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Anniversary Dinner"
-                  value={modalName}
-                  onChange={(e) => setModalName(e.target.value)}
-                  className="w-full bg-[#F7F7F7] border border-[#EBEBEB] rounded-xl px-4 py-3 text-[#222222] font-medium outline-none focus:border-[#FF5A5F]"
-                />
-              </div>
-
-              {/* Goal + Auto-save */}
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="text-xs font-bold text-[#888888] uppercase tracking-wider mb-1.5 block">Goal (K)</label>
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Fund name</label>
                   <input
-                    type="number"
-                    placeholder="500"
-                    value={modalGoal}
-                    onChange={(e) => setModalGoal(e.target.value)}
-                    className="w-full bg-[#F7F7F7] border border-[#EBEBEB] rounded-xl px-4 py-3 text-[#222222] font-medium outline-none focus:border-[#FF5A5F]"
+                    type="text"
+                    placeholder={`e.g. ${newFundType === "experience" ? "Jazz Night at Latitude 15°" : newFundType === "group" ? "Group Trip" : newFundType === "anniversary" ? "Anniversary Dinner" : "Big Celebration"}`}
+                    value={modalName}
+                    onChange={(e) => setModalName(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground font-medium outline-none focus:border-primary"
                   />
                 </div>
-                <div className="flex-1">
-                  <label className="text-xs font-bold text-[#888888] uppercase tracking-wider mb-1.5 block">Auto-save (K)</label>
-                  <input
-                    type="number"
-                    placeholder="50"
-                    value={modalAutoSave}
-                    onChange={(e) => setModalAutoSave(e.target.value)}
-                    className="w-full bg-[#F7F7F7] border border-[#EBEBEB] rounded-xl px-4 py-3 text-[#222222] font-medium outline-none focus:border-[#FF5A5F]"
-                  />
+
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Goal (K)</label>
+                    <input
+                      type="number"
+                      placeholder="500"
+                      value={modalGoal}
+                      onChange={(e) => setModalGoal(e.target.value)}
+                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground font-medium outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Auto-save /wk (K)</label>
+                    <input
+                      type="number"
+                      placeholder="50"
+                      value={modalAutoSave}
+                      onChange={(e) => setModalAutoSave(e.target.value)}
+                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground font-medium outline-none focus:border-primary"
+                    />
+                  </div>
                 </div>
+
+                {modalAutoSave && (
+                  <div className="flex gap-2">
+                    {(["weekly", "monthly"] as const).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setModalFreq(f)}
+                        className={cn(
+                          "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all",
+                          modalFreq === f ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground border border-border"
+                        )}
+                      >
+                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleCreateFund}
+                  disabled={modalSaving || !modalName || !modalGoal}
+                  className="w-full bg-primary text-primary-foreground py-4 rounded-xl font-bold text-[16px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.5)] active:scale-[0.98] transition-all disabled:opacity-60"
+                >
+                  {modalSaving ? "Creating…" : "Create Stash ✨"}
+                </button>
               </div>
-
-              {/* Frequency */}
-              {modalAutoSave && (
-                <div className="flex gap-2">
-                  {(["weekly", "monthly"] as const).map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setModalFreq(f)}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                        modalFreq === f ? "bg-[#FF5A5F] text-white" : "bg-[#F7F7F7] text-[#555555] border border-[#EBEBEB]"
-                      }`}
-                    >
-                      {f.charAt(0).toUpperCase() + f.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={handleCreateFund}
-                disabled={modalSaving || !modalName || !modalGoal}
-                className="w-full bg-[#FF5A5F] text-white py-4 rounded-xl font-bold text-[16px] shadow-[0_8px_20px_-6px_rgba(255,90,95,0.5)] active:scale-[0.98] transition-all disabled:opacity-60"
-              >
-                {modalSaving ? "Creating…" : "Create Stash ✨"}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
