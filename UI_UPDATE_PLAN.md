@@ -222,7 +222,8 @@ Strictly visual.
   - Expanded fund: "Stash" button (Add) + "Edit fund" button.
   - New: **Recent Activity** section at bottom — transaction rows with icon, label, sub, amount.
   - Create Fund sheet: type selector grid first, then name/goal/auto-save form.
-- **Keep intact**: All existing sinking fund state, deposit/withdraw handlers, monthly budget section, create fund API call, plan list.
+- **Post-cleanup (2026-04-15)**: Monthly budget section removed entirely (month nav, budget card, this-month's-plans list, goal setter). `Screen16BudgetProps` simplified to `{ initialFunds: SinkingFund[] }` only. `budget/page.tsx` drops `getBudgetSummary` call + preferences fetch — now just fetches sinking funds. Recent Activity stays static until a real fintech partner API is available.
+- **Keep intact**: All existing sinking fund state, deposit/withdraw handlers, create fund API call.
 - **Scope**: Large
 
 ---
