@@ -19,5 +19,12 @@ export default async function BudgetPage() {
     .eq("status", "active")
     .order("created_at", { ascending: false });
 
-  return <Screen16Budget initialFunds={funds ?? []} />;
+  const { data: transactions } = await (supabase as any)
+    .from("fund_transactions")
+    .select("id, amount, type, source, notes, created_at, sinking_funds(name, emoji)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  return <Screen16Budget initialFunds={funds ?? []} initialTransactions={transactions ?? []} />;
 }

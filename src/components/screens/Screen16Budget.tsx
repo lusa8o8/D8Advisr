@@ -21,8 +21,19 @@ type SinkingFund = {
 
 type FundType = "experience" | "group" | "anniversary" | "milestone";
 
+type FundTransaction = {
+  id: string;
+  amount: number;
+  type: "deposit" | "withdrawal";
+  source: string | null;
+  notes: string | null;
+  created_at: string;
+  sinking_funds: { name: string; emoji: string } | null;
+};
+
 type Screen16BudgetProps = {
   initialFunds: SinkingFund[];
+  initialTransactions: FundTransaction[];
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -144,11 +155,23 @@ function MilestoneBar({ pct, bar, track }: { pct: number; bar: string; track: st
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function Screen16Budget({ initialFunds }: Screen16BudgetProps) {
+function formatTxDate(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+export default function Screen16Budget({ initialFunds, initialTransactions }: Screen16BudgetProps) {
   const router = useRouter();
 
   // Sinking funds state
   const [funds, setFunds] = useState<SinkingFund[]>(initialFunds);
+  const [transactions, setTransactions] = useState<FundTransaction[]>(initialTransactions);
   const [expandedFund, setExpandedFund] = useState<string | null>(null);
   const [fundAction, setFundAction] = useState<{ id: string; type: "deposit" | "withdraw" } | null>(null);
   const [fundActionAmount, setFundActionAmount] = useState("");
@@ -213,6 +236,17 @@ export default function Screen16Budget({ initialFunds }: Screen16BudgetProps) {
         toast.success(type === "deposit" ? `K${amt} added!` : `K${amt} withdrawn`);
       }
       setFunds((prev) => prev.map((f) => f.id === fund.id ? data.fund : f));
+      // Optimistically prepend the new transaction to Recent Activity
+      const newTx: FundTransaction = {
+        id: data.transaction?.id ?? `tmp-${Date.now()}`,
+        amount: amt,
+        type: type === "deposit" ? "deposit" : "withdrawal",
+        source: null,
+        notes: null,
+        created_at: new Date().toISOString(),
+        sinking_funds: { name: fund.name, emoji: fund.emoji },
+      };
+      setTransactions((prev) => [newTx, ...prev].slice(0, 10));
       setFundAction(null);
       setFundActionAmount("");
     } catch (e) {
@@ -454,39 +488,47 @@ export default function Screen16Budget({ initialFunds }: Screen16BudgetProps) {
           <div className="flex justify-between items-center mb-4 px-1">
             <h2 className="text-[17px] font-bold text-foreground">Recent Activity</h2>
           </div>
-          <div className="flex flex-col gap-3">
-            {[
-              { label: "Jazz Night stash",    sub: "Auto-save · Today",         amount: `+K${funds[0]?.auto_save_amount ?? 20}`,  icon: funds[0]?.emoji ?? "🎷", positive: true  },
-              { label: "Downtown Romance",     sub: "Spent · This week",         amount: "-K115",                                  icon: null,                      positive: false },
-              { label: "Anniversary fund",     sub: "Auto-save · Yesterday",     amount: "+K20",                                   icon: funds[1]?.emoji ?? "💍",  positive: true  },
-              { label: funds[2]?.name ?? "Weekend Trip",
-                                              sub: "Contribution · 2 days ago",  amount: "+K100",                                  icon: funds[2]?.emoji ?? "⛷️", positive: true  },
-              { label: "Friday Fun",           sub: "Spent · Last week",         amount: "-K70",                                   icon: null,                      positive: false },
-            ].map((tx, i) => (
-              <div key={i} className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "w-11 h-11 rounded-2xl flex items-center justify-center",
-                    tx.positive ? "bg-[#E8FFF0] text-[#00C851]" : "bg-[#FFF0F1] text-primary"
-                  )}>
-                    {tx.icon
-                      ? <span className="text-xl">{tx.icon}</span>
-                      : tx.positive
-                        ? <ArrowDownLeft size={18} strokeWidth={2.5} />
-                        : <ArrowUpRight size={18} strokeWidth={2.5} />
-                    }
+          {transactions.length === 0 ? (
+            <div className="bg-card border border-border rounded-2xl p-6 text-center">
+              <p className="text-muted-foreground text-sm font-medium">No activity yet</p>
+              <p className="text-muted-foreground text-xs mt-1">Stash something to get started</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {transactions.map((tx) => {
+                const isDeposit = tx.type === "deposit";
+                const fundName = tx.sinking_funds?.name ?? "Fund";
+                const fundEmoji = tx.sinking_funds?.emoji ?? null;
+                const label = `${fundName}`;
+                const sub = `${isDeposit ? "Deposit" : "Withdrawal"} · ${formatTxDate(tx.created_at)}`;
+                const amountStr = `${isDeposit ? "+" : "-"}K${tx.amount.toLocaleString()}`;
+                return (
+                  <div key={tx.id} className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "w-11 h-11 rounded-2xl flex items-center justify-center",
+                        isDeposit ? "bg-[#E8FFF0] text-[#00C851]" : "bg-[#FFF0F1] text-primary"
+                      )}>
+                        {fundEmoji
+                          ? <span className="text-xl">{fundEmoji}</span>
+                          : isDeposit
+                            ? <ArrowDownLeft size={18} strokeWidth={2.5} />
+                            : <ArrowUpRight size={18} strokeWidth={2.5} />
+                        }
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-foreground text-[14px] leading-tight">{label}</h4>
+                        <p className="text-xs text-muted-foreground font-medium mt-0.5">{sub}</p>
+                      </div>
+                    </div>
+                    <span className={cn("font-bold text-[15px]", isDeposit ? "text-[#00C851]" : "text-foreground")}>
+                      {amountStr}
+                    </span>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-foreground text-[14px] leading-tight">{tx.label}</h4>
-                    <p className="text-xs text-muted-foreground font-medium mt-0.5">{tx.sub}</p>
-                  </div>
-                </div>
-                <span className={cn("font-bold text-[15px]", tx.positive ? "text-[#00C851]" : "text-foreground")}>
-                  {tx.amount}
-                </span>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
