@@ -5,7 +5,9 @@ import {
   ArrowLeft, ChevronRight, CheckCircle, AlertCircle, XCircle,
   ClipboardList, Search, Shield, Star, Eye, Edit3, Save,
   ChevronDown, Clock, RotateCcw, Plus, Lock, Activity, TrendingUp, Hourglass,
+  Upload, X, Image as ImageIcon,
 } from "lucide-react";
+import { supabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -33,6 +35,7 @@ interface DBVenue {
   verification_score: number; confidence_score: number;
   verified_at: string | null; source: string; tags: string[];
   is_active: boolean; created_at: string; updated_at: string;
+  image_url: string | null;
 }
 
 interface UIVenue {
@@ -40,6 +43,7 @@ interface UIVenue {
   tier: Tier; health: Health; nextInspectionDue: string;
   listing: Record<string, FieldMeta>;
   experience: Record<string, FieldMeta>;
+  image_url: string | null;
   _raw: DBVenue;
 }
 
@@ -134,6 +138,7 @@ function toUIVenue(v: DBVenue): UIVenue {
       "Verification Score": { value: `${(v.verification_score * 5).toFixed(1)} / 5`, source: "Manual",    verifiedAt: verAt, confidence: scoreConf(v.verification_score) },
       "Data Source":        { value: v.source, source: "System", verifiedAt: v.created_at.split("T")[0], confidence: "high" },
     },
+    image_url: v.image_url ?? null,
     _raw: v,
   };
 }
@@ -177,6 +182,7 @@ export default function AdminPanel() {
   const [queueFilterCat,  setQueueFilterCat]  = useState("all");
   const [queuePage,       setQueuePage]       = useState(1);
   const [batchBusy,       setBatchBusy]       = useState(false);
+  const [uploading,       setUploading]       = useState(false);
 
   const selectedVenue = venues.find(v => v.id === selectedId) ?? null;
 
@@ -314,6 +320,49 @@ export default function AdminPanel() {
       removeFromQueue(v.id);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Reject failed"); }
     finally { setQueueBusy(null); }
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !selectedVenue) return;
+    setUploading(true);
+    try {
+      const ext      = file.name.split(".").pop();
+      const filename = `${selectedVenue.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabaseBrowserClient.storage
+        .from("venue-images")
+        .upload(filename, file, { upsert: true });
+      if (upErr) throw upErr;
+
+      const { data: urlData } = supabaseBrowserClient.storage
+        .from("venue-images")
+        .getPublicUrl(filename);
+      const publicUrl = urlData.publicUrl;
+
+      await fetch("/api/admin/venues", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venue_id: selectedVenue.id, field: "image_url", value: publicUrl, reason: "Image uploaded via Admin Panel" }),
+      });
+
+      setVenues(vs => vs.map(v => v.id === selectedVenue.id ? { ...v, image_url: publicUrl } : v));
+      toast.success("Image uploaded");
+    } catch (err) {
+      toast.error("Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleRemoveImage() {
+    if (!selectedVenue) return;
+    await fetch("/api/admin/venues", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ venue_id: selectedVenue.id, field: "image_url", value: null, reason: "Image removed via Admin Panel" }),
+    });
+    setVenues(vs => vs.map(v => v.id === selectedVenue.id ? { ...v, image_url: null } : v));
+    toast.success("Image removed");
   }
 
   async function handleBatchApprove(criteria: { category: string; hasAddress: boolean }) {
@@ -674,6 +723,35 @@ export default function AdminPanel() {
               {/* LISTING */}
               {activeSection === "listing" && (
                 <div className="flex flex-col gap-2.5">
+
+                  {/* Image upload */}
+                  <div className="bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden mb-1">
+                    {selectedVenue.image_url ? (
+                      <div className="relative">
+                        <img src={selectedVenue.image_url} alt={selectedVenue.name} className="w-full h-40 object-cover" />
+                        <button onClick={handleRemoveImage}
+                          className="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white active:scale-95 transition-transform">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-32 bg-[#F7F7F7] flex items-center justify-center border-b border-[#EBEBEB]">
+                        <ImageIcon size={32} className="text-[#D1D1D1]" />
+                      </div>
+                    )}
+                    <div className="p-4">
+                      <p className="font-bold text-[#222222] text-sm mb-3">Venue Photo</p>
+                      <label className={cn(
+                        "w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm border-2 border-dashed cursor-pointer transition-all active:scale-[0.98]",
+                        uploading ? "border-[#EBEBEB] text-[#999999]" : "border-[#FF5A5F] text-[#FF5A5F]"
+                      )}>
+                        <Upload size={16} />
+                        {uploading ? "Uploading…" : "Upload Photo"}
+                        <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleImageUpload} />
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-1.5 mb-1 px-1">
                     <Edit3 size={13} className="text-gray-400" />
                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Listing Data — Editable</p>

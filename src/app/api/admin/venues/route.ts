@@ -128,6 +128,17 @@ export async function POST(request: NextRequest) {
 // ── PATCH — update an approved venue ─────────────────────────────────────────
 export async function PATCH(request: NextRequest) {
   const body = await request.json();
+
+  // field/value format (used by image upload)
+  if (body.field && body.venue_id) {
+    const { error } = await supabaseService
+      .from("venues")
+      .update({ [body.field]: body.value ?? null, updated_at: new Date().toISOString() })
+      .eq("id", body.venue_id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true });
+  }
+
   const { id, ...fields } = body;
 
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });

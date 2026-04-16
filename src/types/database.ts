@@ -18,6 +18,8 @@ export type Venue = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  image_url: string | null;
+  image_urls: string[] | null;
 };
 
 export type VenueDetails = {
@@ -157,10 +159,12 @@ export type ExperienceLog = {
 
 export type VenueInsert = Omit<
   Venue,
-  "id" | "created_at" | "updated_at" | "verification_score" | "confidence_score"
+  "id" | "created_at" | "updated_at" | "verification_score" | "confidence_score" | "image_url" | "image_urls"
 > & {
   verification_score?: number;
   confidence_score?: number;
+  image_url?: string | null;
+  image_urls?: string[] | null;
 };
 
 export type VenueDetailsInsert = Omit<VenueDetails, "id">;

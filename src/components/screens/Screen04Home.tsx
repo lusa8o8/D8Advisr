@@ -378,6 +378,35 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
                   className="bg-card rounded-3xl overflow-hidden shadow-sm border border-border cursor-pointer hover:shadow-md transition-shadow"
                 >
                   {/* Hero */}
+                  {venue.image_url ? (
+                    <div className="h-44 relative overflow-hidden">
+                      <img src={venue.image_url} alt={venue.name} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+                      {/* Tier badge — top left */}
+                      <div className={cn(
+                        "absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-sm text-[11px] font-bold shadow-sm",
+                        tierStyle.pill
+                      )}>
+                        <TierIcon size={11} strokeWidth={2.5} />
+                        {tier}
+                      </div>
+                      {/* Rating — top right */}
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-foreground flex items-center gap-1 shadow-sm">
+                        <Star size={12} className="fill-[#FF9500] text-[#FF9500]" />
+                        {venue.confidence_score ? (venue.confidence_score * 5).toFixed(1) : "4.8"}
+                      </div>
+                      {/* Emoji icon — bottom left */}
+                      <div className="absolute bottom-3 left-3 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl border border-white/30">
+                        {categoryEmoji(venue.category)}
+                      </div>
+                      {/* Event badge — bottom right */}
+                      {eventBadge && (
+                        <div className="absolute bottom-3 right-3 bg-black/55 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                          <Ticket size={10} /> {eventBadge}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
                   <div className={`h-44 bg-gradient-to-br ${categoryGradient(venue.category)} relative flex items-center justify-center`}>
                     {/* Dark overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
@@ -412,6 +441,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
                       </div>
                     )}
                   </div>
+                  )}
 
                   {/* Content */}
                   <div className="p-5">

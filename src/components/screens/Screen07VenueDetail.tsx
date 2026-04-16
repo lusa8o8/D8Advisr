@@ -90,10 +90,19 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
     <div className="flex min-h-screen flex-col bg-card pb-28">
       {/* Hero section */}
       <section className="relative h-72 w-full overflow-hidden rounded-b-[40px] shadow-md shrink-0">
-        <div className={`w-full h-full bg-gradient-to-br ${categoryGradient(venue.category)} flex items-center justify-center text-[80px] opacity-60`}>
-          {heroEmoji}
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/25" />
+        {venue.image_url ? (
+          <>
+            <img src={venue.image_url} alt={venue.name} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          </>
+        ) : (
+          <>
+            <div className={`w-full h-full bg-gradient-to-br ${categoryGradient(venue.category)} flex items-center justify-center text-[80px] opacity-60`}>
+              {heroEmoji}
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/25" />
+          </>
+        )}
 
         {/* Back + Share */}
         <div className="absolute top-14 left-6 right-6 flex justify-between items-center">
