@@ -38,6 +38,7 @@
   ],
   "exclude": [
     "node_modules",
+    "supabase",
     "D8Advisr updated replit ui",
     "tmp_replit_pages"
   ]
