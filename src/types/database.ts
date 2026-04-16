@@ -111,6 +111,11 @@ export type RawVenue = {
   raw_data: Record<string, unknown> | null;
   processed: boolean;
   ingested_at: string;
+  // OSM-sourced extended fields (added via migration 20260416000000)
+  osm_id: string | null;
+  raw_phone: string | null;
+  raw_website: string | null;
+  raw_cuisine: string | null;
 };
 
 export type UserPreferences = {
