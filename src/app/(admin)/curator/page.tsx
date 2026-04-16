@@ -4,23 +4,39 @@ import AdminPanel from "@/components/screens/AdminPanel";
 
 export default async function CuratorPage() {
   const supabase = createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
-  // Middleware already redirects unauthenticated users — belt-and-suspenders
-  if (!session) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
     redirect("/");
   }
 
-  // is_admin gate: checked against NEXT_PUBLIC_ADMIN_EMAIL env var
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-  if (!adminEmail || session.user.email !== adminEmail) {
+  // Query users table for is_admin flag
+  const { data: profile } = await (supabase as any)
+    .from("users")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  // Fallback: also allow by email in case is_admin column not yet set
+  const isAdmin =
+    profile?.is_admin === true ||
+    user.email === "lusamalungisha@gmail.com";
+
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <p className="text-center text-sm font-semibold text-muted-foreground">
-          Access denied.
-        </p>
+        <div className="text-center">
+          <p className="text-2xl mb-2">🔒</p>
+          <p className="font-bold text-[#222222]">
+            Access Denied
+          </p>
+          <p className="text-sm text-[#555555] mt-1">
+            Admin only
+          </p>
+        </div>
       </div>
     );
   }
