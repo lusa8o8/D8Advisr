@@ -174,8 +174,15 @@ export default function AdminPanel() {
   const [queueEditCat,    setQueueEditCat]    = useState("restaurant");
   const [queueEditPrice,  setQueueEditPrice]  = useState(2);
   const [queueBusy,       setQueueBusy]       = useState<string | null>(null);
+  const [queueFilterCat,  setQueueFilterCat]  = useState("all");
+  const [queuePage,       setQueuePage]       = useState(1);
+  const [batchBusy,       setBatchBusy]       = useState(false);
 
   const selectedVenue = venues.find(v => v.id === selectedId) ?? null;
+
+  const PAGE_SIZE     = 20;
+  const filteredQueue = queue.filter(v => queueFilterCat === "all" || v.raw_category === queueFilterCat);
+  const pagedQueue    = filteredQueue.slice(0, queuePage * PAGE_SIZE);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
 
@@ -309,6 +316,46 @@ export default function AdminPanel() {
     finally { setQueueBusy(null); }
   }
 
+  async function handleBatchApprove(criteria: { category: string; hasAddress: boolean }) {
+    setBatchBusy(true);
+    try {
+      const res  = await fetch("/api/admin/venues/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(criteria),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Batch approve failed");
+      toast.success(`✅ ${data.approved} venue${data.approved !== 1 ? "s" : ""} approved`);
+      setQueue(prev => prev.filter(v => {
+        if (v.raw_category !== criteria.category) return true;
+        if (criteria.hasAddress && !v.raw_address) return true;
+        return false;
+      }));
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Batch approve failed"); }
+    finally { setBatchBusy(false); }
+  }
+
+  async function handleBatchReject(criteria: { category: string; hasNoAddress: boolean }) {
+    setBatchBusy(true);
+    try {
+      const res  = await fetch("/api/admin/venues/batch", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(criteria),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Batch reject failed");
+      toast.success(`🗑️ ${data.rejected} venue${data.rejected !== 1 ? "s" : ""} rejected`);
+      setQueue(prev => prev.filter(v => {
+        if (v.raw_category !== criteria.category) return true;
+        if (criteria.hasNoAddress && v.raw_address) return true;
+        return false;
+      }));
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Batch reject failed"); }
+    finally { setBatchBusy(false); }
+  }
+
   // ── Loading ───────────────────────────────────────────────────────────────
 
   if (loading) return (
@@ -368,11 +415,35 @@ export default function AdminPanel() {
       {view === "queue" && (
         <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
           <div className="max-w-xl mx-auto">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4 px-1">
-              {queue.length} venue{queue.length !== 1 ? "s" : ""} pending review
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
+              {filteredQueue.length} venue{filteredQueue.length !== 1 ? "s" : ""} pending review
+              {queueFilterCat !== "all" && ` · ${queueFilterCat}`}
             </p>
 
-            {queue.length === 0 && (
+            {/* Category filter chips */}
+            <div className="flex gap-2 overflow-x-auto pb-1 mb-3">
+              {(["all", ...QUEUE_CATS] as string[]).map(cat => (
+                <button key={cat} onClick={() => { setQueueFilterCat(cat); setQueuePage(1); }}
+                  className={cn("shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all",
+                    queueFilterCat === cat ? "bg-[#141414] text-white border-[#141414]" : "bg-white text-gray-600 border-gray-200")}>
+                  {cat === "all" ? "All" : cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Batch action buttons */}
+            {queueFilterCat === "restaurant" && filteredQueue.some(v => v.raw_address) && (
+              <button disabled={batchBusy} onClick={() => handleBatchApprove({ category: "restaurant", hasAddress: true })}
+                className="w-full bg-[#E8FFF0] text-[#00A845] font-bold text-sm py-3 rounded-2xl mb-2 border border-[#00C851]/20 active:scale-[0.98] transition-all disabled:opacity-50">
+                ✅ Approve All with Address
+              </button>
+            )}
+            <button disabled={batchBusy} onClick={() => handleBatchReject({ category: "bar", hasNoAddress: true })}
+              className="w-full bg-[#FFF0F1] text-[#FF5A5F] font-bold text-sm py-3 rounded-2xl mb-4 border border-[#FF5A5F]/20 active:scale-[0.98] transition-all disabled:opacity-50">
+              🗑️ Reject All Unnamed/Low Quality
+            </button>
+
+            {filteredQueue.length === 0 && (
               <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center shadow-sm">
                 <p className="text-2xl mb-2">🎉</p>
                 <p className="font-semibold text-gray-800 text-sm">Queue is empty</p>
@@ -381,7 +452,7 @@ export default function AdminPanel() {
             )}
 
             <div className="flex flex-col gap-3">
-              {queue.map(v => {
+              {pagedQueue.map(v => {
                 const isEditing = queueEditingId === v.id;
                 const busy      = queueBusy === v.id || queueBusy === `${v.id}_r`;
                 return (
@@ -395,10 +466,10 @@ export default function AdminPanel() {
                           </span>
                         )}
                       </div>
-                      {v.raw_address   && <p className="text-xs text-gray-400 mb-0.5">{v.raw_address}</p>}
-                      {v.raw_latitude != null && v.raw_longitude != null && (
-                        <p className="text-xs text-gray-400 mb-0.5">{v.raw_latitude.toFixed(5)}, {v.raw_longitude.toFixed(5)}</p>
-                      )}
+                      {v.raw_address
+                        ? <p className="text-xs font-semibold text-gray-700 mb-0.5">{v.raw_address}</p>
+                        : <p className="text-xs text-gray-400 mb-0.5 italic">No address — coordinates only</p>
+                      }
                       {v.raw_cuisine  && <p className="text-xs text-gray-400 mb-0.5">Cuisine: {v.raw_cuisine}</p>}
                       {v.osm_id       && <p className="text-[10px] text-gray-300 mt-1 font-mono">osm:{v.osm_id}</p>}
                     </div>
@@ -447,6 +518,12 @@ export default function AdminPanel() {
                   </div>
                 );
               })}
+              {pagedQueue.length < filteredQueue.length && (
+                <button onClick={() => setQueuePage(p => p + 1)}
+                  className="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 font-bold text-[13px] hover:border-[#FF5A5F] hover:text-[#FF5A5F] transition-all">
+                  Load more ({filteredQueue.length - pagedQueue.length} remaining)
+                </button>
+              )}
             </div>
           </div>
         </div>
