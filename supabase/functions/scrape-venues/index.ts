@@ -20,7 +20,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+// Primary mirror first — fall back to the main server if it returns non-2xx
+const OVERPASS_MIRRORS = [
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass-api.de/api/interpreter",
+];
 const CHUNK_SIZE = 400; // stay well under Supabase payload limits
 
 /** Lusaka, Zambia bounding box (south, west, north, east) */
@@ -160,25 +164,27 @@ Deno.serve(async (req) => {
     }
   }
 
-  // ── Fetch from Overpass ─────────────────────────────────────────────────
+  // ── Fetch from Overpass (try mirrors in order) ──────────────────────────
   const query = buildOverpassQuery(bbox);
-  let overpassRes: Response;
-  try {
-    overpassRes = await fetch(OVERPASS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `data=${encodeURIComponent(query)}`,
-    });
-  } catch (err) {
-    return jsonResponse(502, { error: `Overpass fetch failed: ${String(err)}` });
+  let overpassRes: Response | null = null;
+  let lastError = "";
+
+  for (const mirror of OVERPASS_MIRRORS) {
+    try {
+      const res = await fetch(mirror, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `data=${encodeURIComponent(query)}`,
+      });
+      if (res.ok) { overpassRes = res; break; }
+      lastError = `${mirror} returned ${res.status}`;
+    } catch (err) {
+      lastError = `${mirror} fetch failed: ${String(err)}`;
+    }
   }
 
-  if (!overpassRes.ok) {
-    const body = await overpassRes.text().catch(() => "");
-    return jsonResponse(502, {
-      error: `Overpass API returned ${overpassRes.status}`,
-      detail: body.slice(0, 300),
-    });
+  if (!overpassRes) {
+    return jsonResponse(502, { error: `All Overpass mirrors failed. Last error: ${lastError}` });
   }
 
   const { elements = [] }: { elements: OverpassElement[] } =
