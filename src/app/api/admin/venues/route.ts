@@ -1,8 +1,87 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabase/service";
+import {
+  normalizeVenueName,
+  normalizeCategory,
+} from "@/lib/services/normalization-service";
 
+// ── GET — fetch unprocessed raw_venues (venue queue) ─────────────────────────
+export async function GET() {
+  const { data, error } = await supabaseService
+    .from("raw_venues")
+    .select(
+      "id, raw_name, raw_category, raw_address, raw_latitude, raw_longitude, raw_cuisine, osm_id"
+    )
+    .eq("processed", false)
+    .order("ingested_at", { ascending: true })
+    .limit(100);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ venues: data ?? [] });
+}
+
+// ── POST — approve raw_venue or manual add ────────────────────────────────────
 export async function POST(request: NextRequest) {
   const body = await request.json();
+
+  // Approve flow: promote a raw_venue into the venues table
+  if (body.action === "approve" && body.raw_venue_id) {
+    const { data: raw, error: fetchErr } = await supabaseService
+      .from("raw_venues")
+      .select("*")
+      .eq("id", body.raw_venue_id)
+      .single();
+
+    if (fetchErr || !raw) {
+      return NextResponse.json({ error: "Raw venue not found" }, { status: 404 });
+    }
+
+    const name = body.name
+      ? String(body.name).trim()
+      : normalizeVenueName(raw.raw_name ?? "Unnamed Venue");
+
+    const category = body.category ?? normalizeCategory(raw.raw_category ?? "other");
+    const priceLevel: number = Number(body.price_level ?? 2);
+
+    const { data: venue, error: insertErr } = await supabaseService
+      .from("venues")
+      .insert({
+        name,
+        city: "Lusaka",
+        category,
+        activity_type: category,
+        address: raw.raw_address ?? null,
+        latitude: raw.raw_latitude ?? -15.4167,
+        longitude: raw.raw_longitude ?? 28.2833,
+        price_level: priceLevel,
+        price_range: `ZMW ${priceLevel * 100}-${priceLevel * 200}`,
+        tags: raw.raw_cuisine ? [raw.raw_cuisine] : [],
+        source: "overpass",
+        confidence_score: 0.75,
+        verification_score: 0.6,
+        verified_at: new Date().toISOString(),
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (insertErr) {
+      return NextResponse.json({ error: insertErr.message }, { status: 400 });
+    }
+
+    // Mark raw as processed
+    await supabaseService
+      .from("raw_venues")
+      .update({ processed: true })
+      .eq("id", body.raw_venue_id);
+
+    return NextResponse.json({ venue });
+  }
+
+  // Legacy manual-add flow (kept as-is)
   const payload = {
     name: body.name,
     city: "Lusaka",
@@ -32,4 +111,25 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ venue: data });
+}
+
+// ── DELETE — reject raw_venue (mark processed, skip promotion) ────────────────
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ error: "id query param required" }, { status: 400 });
+  }
+
+  const { error } = await supabaseService
+    .from("raw_venues")
+    .update({ processed: true })
+    .eq("id", id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
 }
