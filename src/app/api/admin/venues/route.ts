@@ -5,8 +5,23 @@ import {
   normalizeCategory,
 } from "@/lib/services/normalization-service";
 
-// ── GET — fetch unprocessed raw_venues (venue queue) ─────────────────────────
-export async function GET() {
+// ── GET — queue (default) or approved venues (mode=approved) ─────────────────
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+
+  if (searchParams.get("mode") === "approved") {
+    const { data, error } = await supabaseService
+      .from("venues")
+      .select("*")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ venues: data ?? [] });
+  }
+
+  // Default: unprocessed raw_venues queue
   const { data, error } = await supabaseService
     .from("raw_venues")
     .select(
@@ -16,10 +31,7 @@ export async function GET() {
     .order("ingested_at", { ascending: true })
     .limit(100);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ venues: data ?? [] });
 }
 
@@ -110,6 +122,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
+  return NextResponse.json({ venue: data });
+}
+
+// ── PATCH — update an approved venue ─────────────────────────────────────────
+export async function PATCH(request: NextRequest) {
+  const body = await request.json();
+  const { id, ...fields } = body;
+
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  // Coerce opening_hours string → JSONB object
+  if (typeof fields.opening_hours === "string") {
+    fields.opening_hours = { default: fields.opening_hours };
+  }
+  // Coerce tags string → array
+  if (typeof fields.tags === "string") {
+    fields.tags = (fields.tags as string).split(",").map((t: string) => t.trim()).filter(Boolean);
+  }
+
+  const { data, error } = await supabaseService
+    .from("venues")
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ venue: data });
 }
 
