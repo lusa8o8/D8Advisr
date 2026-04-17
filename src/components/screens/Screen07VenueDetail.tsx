@@ -74,9 +74,23 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
 
   const starRating = getStarRating(venue.confidence_score);
 
-  const [activeTab,   setActiveTab]   = useState<"Overview" | "Events" | "Reviews" | "Location">("Overview");
-  const [activeImage, setActiveImage] = useState<string | null>(venue.image_url ?? null);
-  const [fullscreen,  setFullscreen]  = useState(false);
+  const [activeTab,         setActiveTab]         = useState<"Overview" | "Events" | "Reviews" | "Location">("Overview");
+  const [activeImage,       setActiveImage]       = useState<string | null>(venue.image_url ?? null);
+  const [fullscreen,        setFullscreen]        = useState(false);
+  const [venueEvents,       setVenueEvents]       = useState<Array<{
+    id: string; title: string; description: string | null;
+    starts_at: string; price: number; vibe_tags: string[]; is_active: boolean;
+  }>>([]);
+  const [venueEventsLoaded, setVenueEventsLoaded] = useState(false);
+
+  // Fetch real events when Events tab opens
+  useEffect(() => {
+    if (activeTab !== "Events" || venueEventsLoaded) return;
+    fetch(`/api/admin/events?venue_id=${venue.id}`)
+      .then(r => r.json())
+      .then(data => { setVenueEvents(data.events ?? []); setVenueEventsLoaded(true); })
+      .catch(() => setVenueEventsLoaded(true));
+  }, [activeTab, venueEventsLoaded, venue.id]);
 
   // Slideshow: auto-advance every 3 s when lightbox is open
   useEffect(() => {
@@ -329,48 +343,74 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4">
-                {[
-                  { id: "e1", emoji: "🎷", name: "Sunset Jazz Evening", date: "Fri, Apr 11", time: "7:00 PM", price: "K200/pp", spotsLeft: 8, desc: "Live jazz quartet with curated wine selections. An intimate evening for two.", gradient: "from-amber-400 to-orange-500", vibes: ["Romantic", "Foodie"] },
-                  { id: "e2", emoji: "👨‍🍳", name: "Chef's Tasting Night", date: "Sat, Apr 12", time: "7:30 PM", price: "K350/pp", spotsLeft: 3, desc: "5-course menu crafted live by the head chef. Limited to 8 guests.", gradient: "from-purple-500 to-indigo-600", vibes: ["Romantic", "Adventurous"] },
-                ].map((event) => (
-                  <div key={event.id} className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                    <div className={`h-24 bg-gradient-to-r ${event.gradient} relative overflow-hidden`}>
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
-                      <div className="absolute inset-0 flex items-center px-5 gap-4">
-                        <span className="text-3xl drop-shadow-md shrink-0">{event.emoji}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-white text-[15px] leading-tight">{event.name}</p>
-                          <p className="text-white/80 text-[12px] font-medium mt-0.5">{event.date} · {event.time}</p>
+              {!venueEventsLoaded && (
+                <p className="text-center text-[13px] text-muted-foreground py-6 animate-pulse">Loading events…</p>
+              )}
+
+              {venueEventsLoaded && venueEvents.length === 0 && (
+                <div className="text-center py-10">
+                  <p className="text-3xl mb-3">🎪</p>
+                  <p className="font-bold text-foreground text-[15px]">No upcoming events</p>
+                  <p className="text-[13px] text-muted-foreground mt-1">Enable alerts to hear about new events first</p>
+                </div>
+              )}
+
+              {venueEvents.length > 0 && (
+                <div className="flex flex-col gap-4">
+                  {venueEvents.filter(e => e.is_active).map((event) => {
+                    const interestedKey = `d8_interested_event_${event.id}`;
+                    const interested = typeof window !== "undefined" && localStorage.getItem(interestedKey) === "true";
+                    const dateStr = new Date(event.starts_at).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+                    const timeStr = new Date(event.starts_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+                    return (
+                      <div key={event.id} className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                        <div className="h-20 bg-gradient-to-r from-amber-400 to-orange-500 relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
+                          <div className="absolute inset-0 flex items-center px-5 gap-4">
+                            <span className="text-2xl drop-shadow-md shrink-0">🎪</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-white text-[15px] leading-tight truncate">{event.title}</p>
+                              <p className="text-white/80 text-[12px] font-medium mt-0.5">{dateStr} · {timeStr}</p>
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-xs font-bold px-2.5 py-1.5 rounded-xl shrink-0 bg-white/20 text-white backdrop-blur-sm border border-white/20">
-                          {event.spotsLeft <= 5 ? `${event.spotsLeft} left` : `${event.spotsLeft} spots`}
-                        </span>
+                        <div className="p-4">
+                          {event.description && (
+                            <p className="text-[13px] text-muted-foreground leading-relaxed mb-3">{event.description}</p>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <div className="flex gap-1.5 flex-wrap">
+                              {event.vibe_tags.map((tag) => (
+                                <span key={tag} className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FFF0F1] text-primary">{tag}</span>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="font-bold text-foreground text-[14px]">
+                                {event.price === 0 ? "Free" : `K${event.price}/pp`}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (typeof window !== "undefined") {
+                                    localStorage.setItem(interestedKey, "true");
+                                    toast.success("Saved! We'll remind you.");
+                                  }
+                                }}
+                                className={cn(
+                                  "flex items-center gap-1.5 text-[12px] font-bold px-3.5 py-2 rounded-xl shadow-sm active:scale-95 transition-transform",
+                                  interested ? "bg-background border border-border text-muted-foreground" : "bg-primary text-white"
+                                )}
+                              >
+                                <Ticket size={13} /> {interested ? "Saved" : "Interested"}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-4">
-                      <p className="text-[13px] text-muted-foreground leading-relaxed mb-3">{event.desc}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-1.5 flex-wrap">
-                          {event.vibes.map((v) => (
-                            <span key={v} className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FFF0F1] text-primary">{v}</span>
-                          ))}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-foreground text-[14px]">{event.price}</span>
-                          <button
-                            type="button"
-                            onClick={() => router.push("/plans/generate")}
-                            className="flex items-center gap-1.5 bg-primary text-white text-[12px] font-bold px-3.5 py-2 rounded-xl shadow-sm active:scale-95 transition-transform"
-                          >
-                            <Ticket size={13} /> Add
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

@@ -93,6 +93,52 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ venue });
   }
 
+  // Manual add — curator-entered venue, inserted directly (not from raw_venues)
+  if (body.action === "manual") {
+    const tierToScore: Record<string, number> = {
+      "Verified": 0.6, "D8 Approved": 0.75, "Hidden Gem": 0.95,
+    };
+    const pl = Number(body.price_level ?? 2);
+
+    const { data: venue, error: insertErr } = await supabaseService
+      .from("venues")
+      .insert({
+        name:               String(body.name).trim(),
+        city:               "Lusaka",
+        category:           body.category ?? "restaurant",
+        activity_type:      body.category ?? "restaurant",
+        address:            body.address  ?? null,
+        latitude:           -15.4167,
+        longitude:          28.2833,
+        price_level:        pl,
+        price_range:        `ZMW ${pl * 100}–${pl * 200}`,
+        tags:               [],
+        source:             "manual",
+        confidence_score:   0.6,
+        verification_score: tierToScore[body.tier as string] ?? 0.6,
+        verified_at:        new Date().toISOString(),
+        is_active:          true,
+      })
+      .select()
+      .single();
+
+    if (insertErr) return NextResponse.json({ error: insertErr.message }, { status: 400 });
+
+    // Optionally create venue_details row with phone / website / hours
+    if (body.phone || body.website || body.hours) {
+      await supabaseService.from("venue_details").insert({
+        venue_id:    venue.id,
+        description: null,
+        website:     body.website ?? null,
+        phone:       body.phone   ?? null,
+        photos:      [],
+        highlights:  [],
+      });
+    }
+
+    return NextResponse.json({ venue });
+  }
+
   // Legacy manual-add flow (kept as-is)
   const payload = {
     name: body.name,

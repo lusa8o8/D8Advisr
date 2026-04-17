@@ -157,6 +157,26 @@ export type ExperienceLog = {
   created_at: string;
 };
 
+export type Event = {
+  id: string;
+  venue_id: string;
+  title: string;
+  description: string | null;
+  vibe_tags: string[];
+  price: number;
+  currency: string;
+  starts_at: string;
+  ends_at: string | null;
+  source: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EventWithVenue = Event & {
+  venue_name: string | null;
+};
+
 export type VenueInsert = Omit<
   Venue,
   "id" | "created_at" | "updated_at" | "verification_score" | "confidence_score" | "image_url" | "image_urls"

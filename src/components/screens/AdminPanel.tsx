@@ -55,8 +55,22 @@ type RawVenueItem = {
   raw_cuisine: string | null; osm_id: string | null;
 };
 
-type AdminView = "queue" | "list" | "detail" | "tracker" | "health";
-type NavTab    = "queue" | "venues" | "tracker" | "health";
+type AdminView = "queue" | "list" | "detail" | "tracker" | "health" | "events";
+type NavTab    = "queue" | "venues" | "tracker" | "health" | "events";
+
+type EventItem = {
+  id: string;
+  venue_id: string;
+  venue_name: string | null;
+  title: string;
+  description: string | null;
+  vibe_tags: string[];
+  price: number;
+  currency: string;
+  starts_at: string;
+  ends_at: string | null;
+  is_active: boolean;
+};
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -146,6 +160,305 @@ function toUIVenue(v: DBVenue): UIVenue {
   };
 }
 
+// ─── Vibe tags list ───────────────────────────────────────────────────────────
+const VIBE_TAGS = ["Romantic","Fun","Cultural","Foodie","Nightlife","Adventurous","Chill","Live Music"];
+
+// ─── AddVenueForm ─────────────────────────────────────────────────────────────
+function AddVenueForm({ onClose, onSave }: { onClose: () => void; onSave: (v: DBVenue) => void }) {
+  const [name,       setName]       = useState("");
+  const [category,   setCategory]   = useState("restaurant");
+  const [address,    setAddress]    = useState("");
+  const [priceLevel, setPriceLevel] = useState(2);
+  const [phone,      setPhone]      = useState("");
+  const [website,    setWebsite]    = useState("");
+  const [hours,      setHours]      = useState("");
+  const [tier,       setTier]       = useState<Tier>("Verified");
+  const [saving,     setSaving]     = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/venues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "manual",
+          name, category, address,
+          price_level: priceLevel,
+          phone:   phone   || undefined,
+          website: website || undefined,
+          hours:   hours   || undefined,
+          tier,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to add venue");
+      toast.success(`✅ ${name} added`);
+      onSave(data.venue as DBVenue);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={onClose}>
+      <div className="bg-white w-full rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-black text-[#222222] text-[18px]">Add New Venue</h2>
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#F7F7F7] flex items-center justify-center">
+            <X size={18} className="text-[#555555]" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Name *</label>
+            <input value={name} onChange={e => setName(e.target.value)} required autoFocus
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all"
+              placeholder="e.g. Latitude Restaurant" />
+          </div>
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Category</label>
+            <select value={category} onChange={e => setCategory(e.target.value)}
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all">
+              {["restaurant","bar","cafe","nightclub","activity"].map(c => (
+                <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Address</label>
+            <input value={address} onChange={e => setAddress(e.target.value)}
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all"
+              placeholder="e.g. Longacres, Lusaka" />
+          </div>
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">City</label>
+            <div className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#999999] flex items-center gap-2">
+              <Lock size={13} /> Lusaka
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Price Level</label>
+            <select value={priceLevel} onChange={e => setPriceLevel(Number(e.target.value))}
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all">
+              <option value={1}>1 — Budget (under K100)</option>
+              <option value={2}>2 — Moderate (K100–300)</option>
+              <option value={3}>3 — Upscale (K300–600)</option>
+              <option value={4}>4 — Premium (K600+)</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Phone <span className="font-normal text-[#999999]">(optional)</span></label>
+            <input value={phone} onChange={e => setPhone(e.target.value)} type="tel"
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all"
+              placeholder="+260 97 000 0000" />
+          </div>
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Website <span className="font-normal text-[#999999]">(optional)</span></label>
+            <input value={website} onChange={e => setWebsite(e.target.value)} type="url"
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all"
+              placeholder="https://…" />
+          </div>
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Opening Hours <span className="font-normal text-[#999999]">(optional)</span></label>
+            <input value={hours} onChange={e => setHours(e.target.value)}
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all"
+              placeholder="Mon–Sat 9am–10pm" />
+          </div>
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Tier</label>
+            <select value={tier} onChange={e => setTier(e.target.value as Tier)}
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all">
+              <option value="Verified">Verified</option>
+              <option value="D8 Approved">D8 Approved</option>
+              <option value="Hidden Gem">Hidden Gem</option>
+            </select>
+          </div>
+          <button type="submit" disabled={saving || !name.trim()}
+            className="w-full bg-[#FF5A5F] text-white font-bold text-[15px] py-4 rounded-2xl mt-1 active:scale-[0.98] transition-all disabled:opacity-50">
+            {saving ? "Adding…" : "Add Venue"}
+          </button>
+          <button type="button" onClick={onClose} className="w-full text-[#555555] font-bold text-[14px] py-2">
+            Cancel
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── AddEventForm ─────────────────────────────────────────────────────────────
+function AddEventForm({
+  venues, onClose, onSave,
+}: {
+  venues: UIVenue[];
+  onClose: () => void;
+  onSave: (e: EventItem) => void;
+}) {
+  const [title,       setTitle]       = useState("");
+  const [venueId,     setVenueId]     = useState("");
+  const [venueSearch, setVenueSearch] = useState("");
+  const [description, setDescription] = useState("");
+  const [startsAt,    setStartsAt]    = useState("");
+  const [endsAt,      setEndsAt]      = useState("");
+  const [price,       setPrice]       = useState(0);
+  const [vibeTags,    setVibeTags]    = useState<string[]>([]);
+  const [isActive,    setIsActive]    = useState(true);
+  const [saving,      setSaving]      = useState(false);
+
+  const filteredVenues = venues
+    .filter(v => v.name.toLowerCase().includes(venueSearch.toLowerCase()))
+    .slice(0, 8);
+
+  const selectedVenueName = venues.find(v => v.id === venueId)?.name;
+
+  function toggleTag(tag: string) {
+    setVibeTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || !venueId || !startsAt) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venue_id:    venueId,
+          title:       title.trim(),
+          description: description.trim() || null,
+          vibe_tags:   vibeTags,
+          price,
+          starts_at:   new Date(startsAt).toISOString(),
+          ends_at:     endsAt ? new Date(endsAt).toISOString() : null,
+          is_active:   isActive,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      toast.success(`🎪 "${title}" added`);
+      onSave({ ...data.event, venue_name: selectedVenueName ?? null } as EventItem);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={onClose}>
+      <div className="bg-white w-full rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-black text-[#222222] text-[18px]">Add Event</h2>
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#F7F7F7] flex items-center justify-center">
+            <X size={18} className="text-[#555555]" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Title *</label>
+            <input value={title} onChange={e => setTitle(e.target.value)} required autoFocus
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all"
+              placeholder="e.g. Sunset Jazz Evening" />
+          </div>
+
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Venue *</label>
+            {venueId && selectedVenueName ? (
+              <div className="flex items-center gap-3 bg-[#F7F7F7] rounded-xl px-4 py-3">
+                <span className="flex-1 text-[14px] font-semibold text-[#222222]">{selectedVenueName}</span>
+                <button type="button" onClick={() => { setVenueId(""); setVenueSearch(""); }}
+                  className="text-[11px] font-bold text-[#FF5A5F]">Change</button>
+              </div>
+            ) : (
+              <>
+                <input value={venueSearch} onChange={e => setVenueSearch(e.target.value)}
+                  className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all"
+                  placeholder="Type to search venues…" />
+                {venueSearch && (
+                  <div className="mt-1 bg-white border border-[#EBEBEB] rounded-xl overflow-hidden shadow-sm">
+                    {filteredVenues.length === 0 && (
+                      <p className="text-[13px] text-[#999999] px-4 py-3">No venues found</p>
+                    )}
+                    {filteredVenues.map(v => (
+                      <button key={v.id} type="button"
+                        onClick={() => { setVenueId(v.id); setVenueSearch(""); }}
+                        className="w-full text-left px-4 py-3 border-b border-[#F7F7F7] last:border-0 active:bg-[#F7F7F7] transition-colors">
+                        <p className="font-bold text-[#222222] text-[13px]">{v.name}</p>
+                        <p className="text-[11px] text-[#999999] capitalize">{v.category}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Description <span className="font-normal text-[#999999]">(optional)</span></label>
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all resize-none"
+              placeholder="Describe the event…" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-bold text-[#222222] block mb-1.5">Start *</label>
+              <input type="datetime-local" value={startsAt} onChange={e => setStartsAt(e.target.value)} required
+                className="w-full bg-[#F7F7F7] rounded-xl px-3 py-3 text-[13px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all" />
+            </div>
+            <div>
+              <label className="text-sm font-bold text-[#222222] block mb-1.5">End <span className="font-normal text-[#999999]">(opt)</span></label>
+              <input type="datetime-local" value={endsAt} onChange={e => setEndsAt(e.target.value)}
+                className="w-full bg-[#F7F7F7] rounded-xl px-3 py-3 text-[13px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-1.5">Price in ZMW — 0 = Free</label>
+            <input type="number" min="0" value={price} onChange={e => setPrice(Number(e.target.value))}
+              className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all" />
+          </div>
+
+          <div>
+            <label className="text-sm font-bold text-[#222222] block mb-2">Vibe Tags</label>
+            <div className="flex flex-wrap gap-2">
+              {VIBE_TAGS.map(tag => (
+                <button key={tag} type="button" onClick={() => toggleTag(tag)}
+                  className={cn("px-3 py-1.5 rounded-full text-[12px] font-bold border transition-all",
+                    vibeTags.includes(tag) ? "bg-[#222222] text-white border-[#222222]" : "bg-white text-[#555555] border-[#EBEBEB]")}>
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between py-1">
+            <label className="text-sm font-bold text-[#222222]">Active</label>
+            <button type="button" onClick={() => setIsActive(v => !v)}
+              className={cn("w-11 h-6 rounded-full transition-colors relative overflow-hidden", isActive ? "bg-[#00C851]" : "bg-gray-200")}>
+              <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform", isActive ? "translate-x-[18px]" : "translate-x-0")} />
+            </button>
+          </div>
+
+          <button type="submit" disabled={saving || !title.trim() || !venueId || !startsAt}
+            className="w-full bg-[#FF5A5F] text-white font-bold text-[15px] py-4 rounded-2xl mt-1 active:scale-[0.98] transition-all disabled:opacity-50">
+            {saving ? "Adding…" : "Add Event"}
+          </button>
+          <button type="button" onClick={onClose} className="w-full text-[#555555] font-bold text-[14px] py-2">
+            Cancel
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AdminPanel() {
@@ -186,6 +499,10 @@ export default function AdminPanel() {
   const [queuePage,       setQueuePage]       = useState(1);
   const [batchBusy,       setBatchBusy]       = useState(false);
   const [uploading,       setUploading]       = useState(false);
+  const [showAddVenue,    setShowAddVenue]    = useState(false);
+  const [showAddEvent,    setShowAddEvent]    = useState(false);
+  const [events,          setEvents]          = useState<EventItem[]>([]);
+  const [eventsLoading,   setEventsLoading]   = useState(false);
 
   const selectedVenue = venues.find(v => v.id === selectedId) ?? null;
 
@@ -205,6 +522,16 @@ export default function AdminPanel() {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  // Fetch events when Events tab is active
+  useEffect(() => {
+    if (navTab !== "events") return;
+    setEventsLoading(true);
+    fetch("/api/admin/events")
+      .then(r => r.json())
+      .then(data => { setEvents(data.events ?? []); setEventsLoading(false); })
+      .catch(() => setEventsLoading(false));
+  }, [navTab]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -425,6 +752,29 @@ export default function AdminPanel() {
     finally { setBatchBusy(false); }
   }
 
+  // ── Event actions ─────────────────────────────────────────────────────────
+
+  async function toggleEventActive(event: EventItem) {
+    const next = !event.is_active;
+    setEvents(prev => prev.map(e => e.id === event.id ? { ...e, is_active: next } : e));
+    await fetch("/api/admin/events", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event_id: event.id, is_active: next }),
+    });
+  }
+
+  async function deleteEvent(id: string) {
+    if (!window.confirm("Delete this event? This cannot be undone.")) return;
+    await fetch("/api/admin/events", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event_id: id }),
+    });
+    setEvents(prev => prev.filter(e => e.id !== id));
+    toast.success("Event deleted");
+  }
+
   // ── Loading ───────────────────────────────────────────────────────────────
 
   if (loading) return (
@@ -468,6 +818,7 @@ export default function AdminPanel() {
           {([
             { tab: "queue"   as NavTab, v: "queue"   as AdminView, icon: <ClipboardList size={13} />, label: `Queue (${queue.length})` },
             { tab: "venues"  as NavTab, v: "list"    as AdminView, icon: <Search size={13} />,        label: `Venues (${venues.length})` },
+            { tab: "events"  as NavTab, v: "events"  as AdminView, icon: <Plus size={13} />,          label: `Events (${events.length})` },
             { tab: "tracker" as NavTab, v: "tracker" as AdminView, icon: <Clock size={13} />,         label: "Inspections" },
             { tab: "health"  as NavTab, v: "health"  as AdminView, icon: <Activity size={13} />,      label: "Health" },
           ] as const).map(({ tab, v, icon, label }) => (
@@ -654,7 +1005,8 @@ export default function AdminPanel() {
               </button>
             ))}
 
-            <button className="w-full bg-white rounded-2xl border-2 border-dashed border-gray-200 p-5 flex items-center justify-center gap-2 text-gray-400 font-bold text-[14px] hover:border-[#FF5A5F] hover:text-[#FF5A5F] active:scale-[0.98] transition-all">
+            <button onClick={() => setShowAddVenue(true)}
+              className="w-full bg-white rounded-2xl border-2 border-dashed border-gray-200 p-5 flex items-center justify-center gap-2 text-gray-400 font-bold text-[14px] hover:border-[#FF5A5F] hover:text-[#FF5A5F] active:scale-[0.98] transition-all">
               <Plus size={17} /> Add New Venue
             </button>
           </div>
@@ -999,6 +1351,69 @@ export default function AdminPanel() {
         </div>
       )}
 
+      {/* ── EVENTS VIEW ──────────────────────────────────────────────────── */}
+      {view === "events" && (
+        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              {events.length} event{events.length !== 1 ? "s" : ""}
+            </p>
+            <button onClick={() => setShowAddEvent(true)}
+              className="flex items-center gap-1.5 bg-[#FF5A5F] text-white font-bold text-[12px] px-3.5 py-2 rounded-full active:scale-95 transition-transform">
+              <Plus size={13} /> Add Event
+            </button>
+          </div>
+
+          {eventsLoading && (
+            <p className="text-center text-gray-400 text-sm py-8 animate-pulse">Loading events…</p>
+          )}
+
+          {!eventsLoading && events.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-4xl mb-3">🎪</p>
+              <p className="font-bold text-[#222222]">No events yet</p>
+              <p className="text-sm text-[#555555] mt-1">Add your first Lusaka event</p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {events.map(event => (
+              <div key={event.id} className="bg-white rounded-2xl border border-[#EBEBEB] p-4 shadow-sm">
+                <div className="flex items-start justify-between mb-1.5">
+                  <p className="font-bold text-[#222222] text-[15px] leading-tight flex-1 pr-3">{event.title}</p>
+                  <button
+                    onClick={() => toggleEventActive(event)}
+                    className={cn("w-5 h-5 rounded-full shrink-0 mt-0.5 transition-colors", event.is_active ? "bg-[#00C851]" : "bg-gray-300")}
+                    title={event.is_active ? "Active — tap to deactivate" : "Inactive — tap to activate"}
+                  />
+                </div>
+                <p className="text-sm text-[#555555] font-medium mb-0.5">{event.venue_name ?? "Unknown venue"}</p>
+                <p className="text-xs text-[#999999] mb-2">
+                  {new Date(event.starts_at).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                  {" · "}
+                  {new Date(event.starts_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                  {" · "}
+                  {event.price === 0 ? "Free" : `K${event.price}`}
+                </p>
+                {event.vibe_tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {event.vibe_tags.map(tag => (
+                      <span key={tag} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF0F1] text-[#FF5A5F]">{tag}</span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2 pt-2 border-t border-[#F7F7F7]">
+                  <button onClick={() => deleteEvent(event.id)}
+                    className="flex-1 py-2 rounded-xl bg-[#FFF0F1] text-[#FF5A5F] font-bold text-[12px] active:scale-[0.97] transition-transform">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── HEALTH VIEW ──────────────────────────────────────────────────── */}
       {view === "health" && (() => {
         const allFields   = venues.flatMap(v => [...Object.values(v.listing), ...Object.values(v.experience)]);
@@ -1135,6 +1550,28 @@ export default function AdminPanel() {
           </div>
         );
       })()}
+      {/* ── ADD VENUE OVERLAY ────────────────────────────────────────────── */}
+      {showAddVenue && (
+        <AddVenueForm
+          onClose={() => setShowAddVenue(false)}
+          onSave={(v) => {
+            setVenues(prev => [toUIVenue(v), ...prev]);
+            setShowAddVenue(false);
+          }}
+        />
+      )}
+
+      {/* ── ADD EVENT OVERLAY ────────────────────────────────────────────── */}
+      {showAddEvent && (
+        <AddEventForm
+          venues={venues}
+          onClose={() => setShowAddEvent(false)}
+          onSave={(e) => {
+            setEvents(prev => [e, ...prev]);
+            setShowAddEvent(false);
+          }}
+        />
+      )}
     </div>
   );
 }
