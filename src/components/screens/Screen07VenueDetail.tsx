@@ -78,6 +78,19 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
   const [activeImage, setActiveImage] = useState<string | null>(venue.image_url ?? null);
   const [fullscreen,  setFullscreen]  = useState(false);
 
+  // Slideshow: auto-advance every 3 s when lightbox is open
+  useEffect(() => {
+    if (!fullscreen || !venue.image_urls || venue.image_urls.length <= 1) return;
+    const urls = venue.image_urls;
+    const timer = setInterval(() => {
+      setActiveImage(prev => {
+        const idx = urls.indexOf(prev ?? "");
+        return urls[(idx + 1) % urls.length];
+      });
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [fullscreen, venue.image_urls]);
+
   const notifyKey = `d8_notify_venue_${venue.id}`;
   const [notifyOn, setNotifyOn] = useState(false);
   useEffect(() => {
@@ -617,8 +630,9 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
           className="fixed inset-0 bg-black z-50 flex flex-col"
           onClick={() => setFullscreen(false)}
         >
-          {/* Close button */}
-          <div className="absolute top-14 right-6 z-10">
+          {/* Header row: venue name + close */}
+          <div className="shrink-0 pt-14 px-6 flex items-center justify-between">
+            <p className="text-white font-bold text-lg drop-shadow-lg">{venue.name}</p>
             <button
               onClick={() => setFullscreen(false)}
               className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white"
@@ -627,14 +641,9 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
             </button>
           </div>
 
-          {/* Venue name */}
-          <div className="absolute top-14 left-6 z-10">
-            <p className="text-white font-bold text-lg drop-shadow-lg">{venue.name}</p>
-          </div>
-
           {/* Full image */}
           <div
-            className="flex-1 flex items-center justify-center p-4"
+            className="flex-1 min-h-0 flex items-center justify-center p-4"
             onClick={(e) => e.stopPropagation()}
           >
             <img
@@ -644,10 +653,15 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
             />
           </div>
 
+          {/* Tap to close hint — sits between image and thumbnail strip */}
+          <p className="shrink-0 text-center text-white/50 text-xs font-medium py-2 pointer-events-none">
+            Tap anywhere to close
+          </p>
+
           {/* Thumbnail strip */}
           {(venue.image_urls?.length ?? 0) > 1 && (
             <div
-              className="flex gap-3 px-6 pb-12 pt-4 overflow-x-auto no-scrollbar"
+              className="shrink-0 flex gap-3 px-6 pb-10 pt-1 overflow-x-auto no-scrollbar"
               onClick={(e) => e.stopPropagation()}
             >
               {venue.image_urls?.map((url) => (
@@ -666,11 +680,6 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
               ))}
             </div>
           )}
-
-          {/* Tap to close hint */}
-          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 pointer-events-none">
-            <p className="text-white/50 text-xs font-medium">Tap anywhere to close</p>
-          </div>
         </div>
       )}
     </div>
