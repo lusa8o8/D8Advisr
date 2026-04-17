@@ -5,7 +5,7 @@ import {
   ArrowLeft, ChevronRight, CheckCircle, AlertCircle, XCircle,
   ClipboardList, Search, Shield, Star, Eye, Edit3, Save,
   ChevronDown, Clock, RotateCcw, Plus, Lock, Activity, TrendingUp, Hourglass,
-  Upload, X, Image as ImageIcon,
+  Upload, X, Image as ImageIcon, MoreHorizontal, Trash2,
 } from "lucide-react";
 import { supabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -47,6 +47,7 @@ interface UIVenue {
   experience: Record<string, FieldMeta>;
   image_url: string | null;
   image_urls: string[] | null;
+  is_active: boolean;
   _raw: DBVenue;
 }
 
@@ -157,6 +158,7 @@ function toUIVenue(v: DBVenue): UIVenue {
     },
     image_url:  v.image_url  ?? null,
     image_urls: v.image_urls ?? null,
+    is_active:  v.is_active,
     _raw: v,
   };
 }
@@ -504,6 +506,7 @@ export default function AdminPanel() {
   const [queuePage,       setQueuePage]       = useState(1);
   const [batchBusy,       setBatchBusy]       = useState(false);
   const [uploading,       setUploading]       = useState(false);
+  const [openMenuId,      setOpenMenuId]      = useState<string | null>(null);
   const [showAddVenue,    setShowAddVenue]    = useState(false);
   const [showAddEvent,    setShowAddEvent]    = useState(false);
   const [events,          setEvents]          = useState<EventItem[]>([]);
@@ -757,6 +760,48 @@ export default function AdminPanel() {
     finally { setBatchBusy(false); }
   }
 
+  // ── Click-outside — close any open action menu ────────────────────────────
+  useEffect(() => {
+    if (!openMenuId) return;
+    const handler = () => setOpenMenuId(null);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [openMenuId]);
+
+  // ── Venue activate / deactivate ───────────────────────────────────────────
+
+  async function handleToggleActive(venue: UIVenue) {
+    const next = !venue.is_active;
+    setVenues(vs => vs.map(v => v.id === venue.id ? { ...v, is_active: next } : v));
+    setOpenMenuId(null);
+    await fetch("/api/admin/venues", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        venue_id: venue.id,
+        field:    "is_active",
+        value:    next,
+      }),
+    });
+    toast.success(next ? "Venue activated" : "Venue deactivated");
+  }
+
+  // ── Venue soft-delete ─────────────────────────────────────────────────────
+
+  async function handleDeleteVenue(id: string) {
+    if (!window.confirm(
+      "Delete this venue? This cannot be undone. All associated plan items will be affected."
+    )) return;
+    await fetch("/api/admin/venues", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ venue_id: id }),
+    });
+    setVenues(vs => vs.filter(v => v.id !== id));
+    setOpenMenuId(null);
+    toast.success("Venue deleted");
+  }
+
   // ── Event actions ─────────────────────────────────────────────────────────
 
   async function toggleEventActive(event: EventItem) {
@@ -984,30 +1029,101 @@ export default function AdminPanel() {
           <div className="px-4 pb-6 flex flex-col gap-3">
             {filtered.length === 0 && <div className="text-center text-gray-400 text-[14px] py-12">No venues match filters.</div>}
             {filtered.map(v => (
-              <button key={v.id} onClick={() => openDetail(v.id)}
-                className="w-full bg-white rounded-2xl border border-gray-200 p-4 text-left active:scale-[0.98] transition-transform shadow-sm">
-                <div className="flex items-start justify-between mb-2.5">
-                  <div className="flex-1 min-w-0 pr-2">
-                    <p className="font-bold text-gray-900 text-[15px] leading-tight truncate">{v.name}</p>
-                    <p className="text-[12px] text-gray-500 mt-0.5">{v.category} · {v.city}</p>
+              <div key={v.id} className="relative">
+                {/* Main card row */}
+                <div
+                  className={cn(
+                    "bg-white rounded-2xl border p-4 shadow-sm",
+                    v.is_active ? "border-gray-200" : "border-gray-200 opacity-60"
+                  )}
+                >
+                  <div className="flex items-start justify-between mb-2.5">
+                    {/* Name + category — tap to open detail */}
+                    <button
+                      type="button"
+                      onClick={() => openDetail(v.id)}
+                      className="flex-1 min-w-0 pr-2 text-left active:opacity-70 transition-opacity"
+                    >
+                      <p className="font-bold text-gray-900 text-[15px] leading-tight truncate">
+                        {v.name}
+                        {!v.is_active && (
+                          <span className="ml-2 text-[10px] font-bold text-[#999999] bg-gray-100 px-2 py-0.5 rounded-full">Inactive</span>
+                        )}
+                      </p>
+                      <p className="text-[12px] text-gray-500 mt-0.5 capitalize">{v.category} · {v.city}</p>
+                    </button>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold", TIER_STYLE[v.tier])}>
+                        <div className={cn("w-1.5 h-1.5 rounded-full", TIER_DOT[v.tier])} />
+                        {v.tier}
+                      </div>
+                      {/* ⋯ menu trigger */}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === v.id ? null : v.id); }}
+                        className="w-8 h-8 bg-[#F7F7F7] rounded-full flex items-center justify-center text-[#555555] active:scale-95 transition-transform"
+                      >
+                        <MoreHorizontal size={16} />
+                      </button>
+                    </div>
                   </div>
-                  <div className={cn("shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold", TIER_STYLE[v.tier])}>
-                    <div className={cn("w-1.5 h-1.5 rounded-full", TIER_DOT[v.tier])} />
-                    {v.tier}
-                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => openDetail(v.id)}
+                    className="w-full flex items-center justify-between text-left"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      {healthIcon(v.health)}
+                      <span className={cn("text-[11px] font-semibold", healthColor(v.health))}>{HEALTH_LABEL[v.health]}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <Clock size={11} />
+                      <span className="text-[10px] font-medium">Due {v.nextInspectionDue}</span>
+                      <ChevronRight size={14} className="ml-1" />
+                    </div>
+                  </button>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    {healthIcon(v.health)}
-                    <span className={cn("text-[11px] font-semibold", healthColor(v.health))}>{HEALTH_LABEL[v.health]}</span>
+
+                {/* Action menu */}
+                {openMenuId === v.id && (
+                  <div
+                    className="absolute right-0 top-full mt-1 z-20 bg-white rounded-2xl border border-[#EBEBEB] shadow-lg p-2 w-64"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Toggle active */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleActive(v)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F7F7F7] text-left transition-colors"
+                    >
+                      <div className={cn("w-2 h-2 rounded-full shrink-0", v.is_active ? "bg-[#00C851]" : "bg-[#999999]")} />
+                      <span className="text-sm font-semibold text-[#222222]">
+                        {v.is_active ? "Deactivate (hide from feed)" : "Activate (show in feed)"}
+                      </span>
+                    </button>
+                    {/* Edit */}
+                    <button
+                      type="button"
+                      onClick={() => { setOpenMenuId(null); openDetail(v.id); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F7F7F7] text-left transition-colors"
+                    >
+                      <Edit3 size={14} className="text-[#555555] shrink-0" />
+                      <span className="text-sm font-semibold text-[#222222]">Edit Details</span>
+                    </button>
+                    {/* Delete */}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteVenue(v.id)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#FFF0F1] text-left transition-colors"
+                    >
+                      <Trash2 size={14} className="text-[#FF5A5F] shrink-0" />
+                      <span className="text-sm font-semibold text-[#FF5A5F]">Delete Venue</span>
+                    </button>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-400">
-                    <Clock size={11} />
-                    <span className="text-[10px] font-medium">Due {v.nextInspectionDue}</span>
-                    <ChevronRight size={14} className="ml-1" />
-                  </div>
-                </div>
-              </button>
+                )}
+              </div>
             ))}
 
             <button onClick={() => setShowAddVenue(true)}

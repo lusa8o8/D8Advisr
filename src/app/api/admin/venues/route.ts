@@ -241,23 +241,35 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json({ venue: data });
 }
 
-// ── DELETE — reject raw_venue (mark processed, skip promotion) ────────────────
+// ── DELETE — reject raw_venue OR soft-delete approved venue ──────────────────
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
+  const rawId = searchParams.get("id");
 
-  if (!id) {
-    return NextResponse.json({ error: "id query param required" }, { status: 400 });
+  // Legacy: reject raw_venue via query param
+  if (rawId) {
+    const { error } = await supabaseService
+      .from("raw_venues")
+      .update({ processed: true })
+      .eq("id", rawId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  // Soft-delete approved venue by venue_id in body
+  // Using is_active=false rather than hard delete to preserve plan integrity
+  const body = await request.json();
+  const { venue_id } = body;
+
+  if (!venue_id) {
+    return NextResponse.json({ error: "venue_id or ?id= required" }, { status: 400 });
   }
 
   const { error } = await supabaseService
-    .from("raw_venues")
-    .update({ processed: true })
-    .eq("id", id);
+    .from("venues")
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq("id", venue_id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
