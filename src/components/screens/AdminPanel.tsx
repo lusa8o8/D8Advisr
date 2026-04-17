@@ -334,10 +334,7 @@ export default function AdminPanel() {
         .upload(filename, file, { upsert: true });
       if (upErr) throw upErr;
 
-      const { data: urlData } = supabaseBrowserClient.storage
-        .from("venue-images")
-        .getPublicUrl(filename);
-      const publicUrl = urlData.publicUrl;
+      const publicUrl = `https://gsidytvxyhdzrkoijuvs.supabase.co/storage/v1/object/public/venue-images/${filename}`;
 
       await fetch("/api/admin/venues", {
         method: "PATCH",
