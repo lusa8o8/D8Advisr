@@ -9,11 +9,16 @@ export type FilterState = {
   moods: string[];
 };
 
+// Top 8 most relevant category chips for discovery
 const CATEGORY_OPTIONS = [
-  { label: "Dining", value: "restaurant" },
-  { label: "Activity", value: "activity" },
-  { label: "Nightlife", value: "bar" },
-  { label: "Outdoors", value: "park" },
+  { label: "Dining",       value: "restaurant",  emoji: "🍽️" },
+  { label: "Cocktail Bar", value: "cocktail_bar", emoji: "🍸" },
+  { label: "Resort",       value: "resort",       emoji: "🏖️" },
+  { label: "Game Lodge",   value: "game_lodge",   emoji: "🦁" },
+  { label: "Live Music",   value: "live_music",   emoji: "🎵" },
+  { label: "Art Gallery",  value: "art_gallery",  emoji: "🎨" },
+  { label: "Adventure",    value: "adventure",    emoji: "🧗" },
+  { label: "Cafe",         value: "cafe",         emoji: "☕" },
 ];
 
 const MOOD_OPTIONS = ["Romantic", "Fun", "Chill", "Adventurous"];
@@ -81,18 +86,30 @@ export default function FilterModal({
           <section>
             <h3 className="font-bold text-foreground mb-3 text-sm">Category</h3>
             <div className="flex flex-wrap gap-2">
+              {/* "All" clear chip */}
+              <button
+                type="button"
+                onClick={() => setDraft({ ...draft, category: undefined })}
+                className={
+                  !draft.category
+                    ? "bg-primary text-primary-foreground border border-primary px-4 py-2 rounded-full text-sm font-semibold"
+                    : "bg-background border border-border text-foreground px-4 py-2 rounded-full text-sm font-medium"
+                }
+              >
+                All
+              </button>
               {CATEGORY_OPTIONS.map((option) => (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setDraft({ ...draft, category: option.value })}
+                  onClick={() => setDraft({ ...draft, category: draft.category === option.value ? undefined : option.value })}
                   className={
                     draft.category === option.value
                       ? "bg-primary text-primary-foreground border border-primary px-4 py-2 rounded-full text-sm font-semibold"
                       : "bg-background border border-border text-foreground px-4 py-2 rounded-full text-sm font-medium"
                   }
                 >
-                  {option.label}
+                  {option.emoji} {option.label}
                 </button>
               ))}
             </div>

@@ -9,11 +9,17 @@ import type { Venue } from "@/types/database";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import FilterModal, { FilterState } from "@/components/screens/Screen06FilterModal";
 import { cn } from "@/lib/utils";
+import {
+  VENUE_CATEGORY_GROUPS,
+  getCategoryEmoji,
+  getCategoryLabel,
+  getCategoryGroup,
+} from "@/lib/constants/venue-categories";
 
 // ─── Category / tier helpers ──────────────────────────────────────────────────
 
-const CATEGORY_OPTIONS = ["All", "Date Night", "Adventure", "Foodie", "Group"] as const;
-type CategoryFilter = (typeof CATEGORY_OPTIONS)[number];
+const GROUP_PILLS = ["All", ...VENUE_CATEGORY_GROUPS] as const;
+type CategoryFilter = (typeof GROUP_PILLS)[number];
 
 type Tier = "Verified" | "D8 Approved" | "Hidden Gem";
 const TIER_STYLES: Record<Tier, { pill: string; icon: ElementType }> = {
@@ -22,28 +28,63 @@ const TIER_STYLES: Record<Tier, { pill: string; icon: ElementType }> = {
   "Hidden Gem":  { pill: "bg-purple-600/80 text-white", icon: Gem },
 };
 function venueTier(category: string): Tier {
-  if (category === "restaurant") return "D8 Approved";
-  if (category === "bar") return "Verified";
-  if (category === "activity") return "Hidden Gem";
+  if (category === "restaurant" || category === "fine_dining" || category === "casual_dining") return "D8 Approved";
+  if (category === "game_lodge" || category === "safari" || category === "resort") return "Hidden Gem";
   return "Verified";
-}
-function categoryEmoji(category: string) {
-  if (category === "restaurant") return "🍽️";
-  if (category === "bar") return "🍸";
-  if (category === "activity") return "🏛️";
-  return "📍";
 }
 function categoryGradient(category: string) {
   switch (category) {
-    case "restaurant": return "from-rose-400 to-red-500";
-    case "bar":        return "from-amber-400 to-orange-500";
-    case "activity":   return "from-emerald-400 to-green-500";
-    default:           return "from-[#FF5A5F] to-rose-600";
+    // Dining
+    case "restaurant":
+    case "fine_dining":
+    case "casual_dining":
+    case "rooftop_restaurant":
+    case "brunch_spot":         return "from-rose-400 to-red-500";
+    case "food_market":
+    case "dessert":             return "from-orange-300 to-amber-400";
+    case "cafe":                return "from-yellow-400 to-amber-500";
+    // Drinks & Nightlife
+    case "bar":
+    case "pub_grill":
+    case "brewery":             return "from-amber-400 to-orange-500";
+    case "cocktail_bar":        return "from-pink-400 to-rose-500";
+    case "wine_bar":            return "from-rose-600 to-red-700";
+    case "rooftop_bar":         return "from-indigo-400 to-blue-500";
+    case "jazz_bar":
+    case "live_music":          return "from-pink-400 to-rose-500";
+    case "nightclub":
+    case "lounge":              return "from-purple-600 to-indigo-600";
+    // Wellness & Stays
+    case "resort":
+    case "hotel":               return "from-teal-400 to-cyan-500";
+    case "spa":
+    case "yoga":                return "from-teal-300 to-green-400";
+    case "pool":
+    case "waterfront":          return "from-blue-400 to-cyan-500";
+    // Nature & Outdoors
+    case "game_lodge":
+    case "safari":              return "from-amber-600 to-yellow-500";
+    case "nature_reserve":
+    case "park":
+    case "hiking":
+    case "adventure":           return "from-green-500 to-emerald-600";
+    case "picnic":              return "from-lime-400 to-green-500";
+    // Arts & Culture
+    case "art_gallery":
+    case "museum":              return "from-violet-400 to-purple-500";
+    case "cinema":
+    case "theatre":             return "from-red-400 to-orange-500";
+    // Experiences
+    case "karting":             return "from-orange-500 to-red-500";
+    case "water_sports":        return "from-blue-400 to-cyan-500";
+    case "activity":
+    case "event_venue":         return "from-emerald-400 to-green-500";
+    default:                    return "from-[#FF5A5F] to-rose-600";
   }
 }
 function eventBadgeLabel(category: string): string | null {
-  if (category === "bar") return "Live music this week";
-  if (category === "activity") return "Events this week";
+  if (category === "bar" || category === "jazz_bar" || category === "live_music") return "Live music this week";
+  if (category === "activity" || category === "event_venue") return "Events this week";
   return null;
 }
 
@@ -126,20 +167,9 @@ function distanceFromCenter(lat?: number | null, lon?: number | null) {
 }
 
 function matchesCategoryFilter(venue: Venue, filter: CategoryFilter) {
-  const tags = (venue.tags ?? []).map((t) => t.toLowerCase());
-  const activity = venue.activity_type?.toLowerCase() ?? "";
-  switch (filter) {
-    case "Date Night":
-      return venue.category === "restaurant" || tags.includes("romantic") || activity.includes("romantic");
-    case "Adventure":
-      return activity.includes("adventure") || tags.includes("adventure") || venue.category === "activity";
-    case "Foodie":
-      return venue.category === "restaurant" || venue.category === "cafe";
-    case "Group":
-      return true; // no group-specific data — show all
-    default:
-      return true;
-  }
+  if (filter === "All") return true;
+  const group = getCategoryGroup(venue.category);
+  return group === filter;
 }
 
 function matchesMood(venue: Venue, moods: string[]) {
@@ -163,6 +193,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("All");
+
   const [serverVenues, setServerVenues] = useState<Venue[]>(initialVenues);
   const [displayVenues, setDisplayVenues] = useState<Venue[]>(initialVenues);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -258,20 +289,20 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
         </div>
 
         {/* Category pills */}
-        <div className="px-6 py-4 flex gap-3 overflow-x-auto no-scrollbar snap-x">
-          {CATEGORY_OPTIONS.map((category) => (
+        <div className="px-6 py-4 flex gap-2.5 overflow-x-auto no-scrollbar snap-x">
+          {GROUP_PILLS.map((pill) => (
             <button
-              key={category}
+              key={pill}
               type="button"
-              onClick={() => setSelectedCategory(category as CategoryFilter)}
+              onClick={() => setSelectedCategory(pill as CategoryFilter)}
               className={cn(
-                "snap-start whitespace-nowrap px-5 py-2.5 rounded-full font-semibold text-sm transition-all",
-                selectedCategory === category
+                "snap-start whitespace-nowrap px-4 py-2 rounded-full font-semibold text-sm transition-all",
+                selectedCategory === pill
                   ? "bg-foreground text-card shadow-md"
                   : "bg-card text-muted-foreground border border-border hover:border-gray-300"
               )}
             >
-              {category}
+              {pill}
             </button>
           ))}
         </div>
@@ -397,7 +428,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
                       </div>
                       {/* Emoji icon — bottom left */}
                       <div className="absolute bottom-3 left-3 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl border border-white/30">
-                        {categoryEmoji(venue.category)}
+                        {getCategoryEmoji(venue.category)}
                       </div>
                       {/* Event badge — bottom right */}
                       {eventBadge && (
@@ -412,7 +443,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
 
                     {/* Emoji */}
-                    <span className="text-5xl opacity-30 relative z-0">{categoryEmoji(venue.category)}</span>
+                    <span className="text-5xl opacity-30 relative z-0">{getCategoryEmoji(venue.category)}</span>
 
                     {/* Tier badge — top left */}
                     <div className={cn(
@@ -431,7 +462,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
 
                     {/* Emoji icon — bottom left */}
                     <div className="absolute bottom-3 left-3 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl border border-white/30">
-                      {categoryEmoji(venue.category)}
+                      {getCategoryEmoji(venue.category)}
                     </div>
 
                     {/* Event badge — bottom right */}
@@ -452,7 +483,7 @@ export default function Screen04Home({ initialVenues, firstName }: Screen04HomeP
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-3 font-medium capitalize">
-                      <span className="capitalize">{venue.category}</span>
+                      <span>{getCategoryEmoji(venue.category)} {getCategoryLabel(venue.category)}</span>
                       <span className="w-1 h-1 rounded-full bg-gray-300" />
                       <div className="flex items-center gap-1">
                         <MapPin size={12} />

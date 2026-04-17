@@ -6,24 +6,29 @@ import { ArrowLeft, Bell, BellOff, Car, Clock, Copy, Expand, ExternalLink, Footp
 import { toast } from "sonner";
 import type { VenueWithDetails } from "@/types/database";
 import { cn } from "@/lib/utils";
-
-const CATEGORY_EMOJIS: Record<string, string> = {
-  restaurant: "🍽️",
-  bar: "🍸",
-  activity: "🎯",
-  cafe: "☕",
-  park: "🌿",
-};
+import { getCategoryEmoji, getCategoryLabel } from "@/lib/constants/venue-categories";
 
 function categoryGradient(category: string): string {
-  const map: Record<string, string> = {
-    restaurant: "from-rose-400 to-red-500",
-    bar: "from-purple-400 to-indigo-500",
-    activity: "from-amber-400 to-orange-500",
-    cafe: "from-yellow-400 to-amber-500",
-    park: "from-green-400 to-emerald-500",
-  };
-  return map[category] ?? "from-primary/60 to-primary/80";
+  switch (category) {
+    case "restaurant": case "fine_dining": case "casual_dining":
+    case "rooftop_restaurant": case "brunch_spot": return "from-rose-400 to-red-500";
+    case "cafe": case "food_market": case "dessert":  return "from-yellow-400 to-amber-500";
+    case "bar": case "pub_grill": case "brewery":     return "from-amber-400 to-orange-500";
+    case "cocktail_bar": case "jazz_bar": case "live_music": return "from-pink-400 to-rose-500";
+    case "wine_bar":                                   return "from-rose-600 to-red-700";
+    case "rooftop_bar":                                return "from-indigo-400 to-blue-500";
+    case "nightclub": case "lounge":                  return "from-purple-600 to-indigo-600";
+    case "resort": case "hotel":                      return "from-teal-400 to-cyan-500";
+    case "spa": case "yoga":                          return "from-teal-300 to-green-400";
+    case "pool": case "waterfront":                   return "from-blue-400 to-cyan-500";
+    case "game_lodge": case "safari":                 return "from-amber-600 to-yellow-500";
+    case "nature_reserve": case "park": case "picnic": return "from-green-400 to-emerald-500";
+    case "hiking": case "adventure":                  return "from-green-500 to-emerald-600";
+    case "art_gallery": case "museum":                return "from-violet-400 to-purple-500";
+    case "cinema": case "theatre":                    return "from-red-400 to-orange-500";
+    case "activity": case "event_venue":              return "from-amber-400 to-orange-500";
+    default:                                          return "from-primary/60 to-primary/80";
+  }
 }
 
 const DEFAULT_HIGHLIGHTS: Record<string, { emoji: string; label: string }[]> = {
@@ -49,7 +54,7 @@ const formatCurrency = (amount: number) => `K${amount.toFixed(0)}`;
 export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails }) {
   const router = useRouter();
 
-  const heroEmoji = CATEGORY_EMOJIS[venue.category] ?? "✨";
+  const heroEmoji = getCategoryEmoji(venue.category);
   const priceIndicator = "$".repeat(Math.min(Math.max(venue.price_level ?? 1, 1), 4));
 
   const avgPrice = useMemo(() => {
@@ -171,7 +176,7 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
             </div>
             <div>
               <p className="text-white font-bold text-[17px] drop-shadow-sm">{venue.name}</p>
-              <p className="text-white/80 text-[12px] font-medium capitalize">{venue.category}{venue.activity_type ? ` · ${venue.activity_type}` : ""}</p>
+              <p className="text-white/80 text-[12px] font-medium">{getCategoryLabel(venue.category)}</p>
             </div>
           </div>
         </div>
@@ -200,8 +205,8 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
           {/* Info card */}
           <div className="bg-card rounded-3xl p-6 shadow-md border border-border mb-6">
             <div className="flex justify-between items-start mb-2">
-              <span className="bg-background px-3 py-1 rounded-full text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                {venue.activity_type ?? venue.category}
+              <span className="bg-background px-3 py-1 rounded-full text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                {getCategoryEmoji(venue.category)} {getCategoryLabel(venue.category)}
               </span>
               <div className="bg-[#E8FFF0] text-[#00C851] px-3 py-1 rounded-full text-xs font-bold shadow-sm">
                 ~K{venue.price_level ? venue.price_level * 100 : 150}/pp

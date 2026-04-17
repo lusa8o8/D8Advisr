@@ -11,6 +11,7 @@ import { supabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { VENUE_CATEGORIES, VENUE_CATEGORY_GROUPS } from "@/lib/constants/venue-categories";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -224,8 +225,12 @@ function AddVenueForm({ onClose, onSave }: { onClose: () => void; onSave: (v: DB
             <label className="text-sm font-bold text-[#222222] block mb-1.5">Category</label>
             <select value={category} onChange={e => setCategory(e.target.value)}
               className="w-full bg-[#F7F7F7] rounded-xl px-4 py-3 text-[14px] text-[#222222] outline-none border border-transparent focus:bg-white focus:border-[#FF5A5F] transition-all">
-              {["restaurant","bar","cafe","nightclub","activity"].map(c => (
-                <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+              {VENUE_CATEGORY_GROUPS.map(group => (
+                <optgroup key={group} label={group}>
+                  {VENUE_CATEGORIES.filter(c => c.group === group).map(c => (
+                    <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>
