@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Bell, BellOff, Car, Clock, Copy, ExternalLink, Footprints, Globe, Heart, MapPin, Navigation, Phone, Share, Star, ThumbsUp, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import type { VenueWithDetails } from "@/types/database";
+import { cn } from "@/lib/utils";
 
 const CATEGORY_EMOJIS: Record<string, string> = {
   restaurant: "🍽️",
@@ -73,7 +74,8 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
 
   const starRating = getStarRating(venue.confidence_score);
 
-  const [activeTab, setActiveTab] = useState<"Overview" | "Events" | "Reviews" | "Location">("Overview");
+  const [activeTab,   setActiveTab]   = useState<"Overview" | "Events" | "Reviews" | "Location">("Overview");
+  const [activeImage, setActiveImage] = useState<string | null>(venue.image_url ?? null);
 
   const notifyKey = `d8_notify_venue_${venue.id}`;
   const [notifyOn, setNotifyOn] = useState(false);
@@ -90,9 +92,9 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
     <div className="flex min-h-screen flex-col bg-card pb-28">
       {/* Hero section */}
       <section className="relative h-72 w-full overflow-hidden rounded-b-[40px] shadow-md shrink-0">
-        {venue.image_url ? (
+        {activeImage ? (
           <>
-            <img src={venue.image_url} alt={venue.name} className="w-full h-full object-cover" />
+            <img src={activeImage} alt={venue.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           </>
         ) : (
@@ -131,6 +133,24 @@ export default function Screen07VenueDetail({ venue }: { venue: VenueWithDetails
           </div>
         </div>
       </section>
+
+      {/* Thumbnail strip — shown when gallery has multiple images */}
+      {venue.image_urls && venue.image_urls.length > 1 && (
+        <div className="flex gap-2 px-6 py-3 overflow-x-auto no-scrollbar -mt-2 relative z-20">
+          {venue.image_urls.map((url) => (
+            <img
+              key={url}
+              src={url}
+              alt=""
+              onClick={() => setActiveImage(url)}
+              className={cn(
+                "w-16 h-16 rounded-xl object-cover shrink-0 cursor-pointer border-2 transition-all active:scale-95",
+                activeImage === url ? "border-[#FF5A5F]" : "border-transparent"
+              )}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="px-6 -mt-8 relative z-10">
         {/* Info card */}

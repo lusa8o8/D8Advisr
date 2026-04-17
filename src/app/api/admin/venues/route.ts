@@ -129,12 +129,44 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const body = await request.json();
 
-  // field/value format (used by image upload)
+  // field/value format (used by image upload and field edits)
   if (body.field && body.venue_id) {
+    const { field, venue_id, value } = body;
+
+    // Append a URL to the image_urls array (+ set image_url if first)
+    if (field === "image_urls_append") {
+      const { data: current } = await supabaseService
+        .from("venues")
+        .select("image_url, image_urls")
+        .eq("id", venue_id)
+        .single();
+      const currentUrls = (current?.image_urls as string[] | null) ?? [];
+      const isFirst     = currentUrls.length === 0 && !current?.image_url;
+      const newUrls     = [...currentUrls, value];
+      const { error } = await supabaseService
+        .from("venues")
+        .update({ image_urls: newUrls, updated_at: new Date().toISOString(), ...(isFirst && { image_url: value }) })
+        .eq("id", venue_id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ ok: true });
+    }
+
+    // Remove a URL from image_urls and update primary
+    if (field === "image_urls_remove") {
+      const { newUrls, newPrimary } = value as { url: string; newUrls: string[]; newPrimary: string | null };
+      const { error } = await supabaseService
+        .from("venues")
+        .update({ image_urls: newUrls, image_url: newPrimary, updated_at: new Date().toISOString() })
+        .eq("id", venue_id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ ok: true });
+    }
+
+    // Generic single-field update (e.g. image_url, verified_at)
     const { error } = await supabaseService
       .from("venues")
-      .update({ [body.field]: body.value ?? null, updated_at: new Date().toISOString() })
-      .eq("id", body.venue_id);
+      .update({ [field]: value ?? null, updated_at: new Date().toISOString() })
+      .eq("id", venue_id);
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ ok: true });
   }

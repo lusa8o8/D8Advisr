@@ -36,6 +36,7 @@ interface DBVenue {
   verified_at: string | null; source: string; tags: string[];
   is_active: boolean; created_at: string; updated_at: string;
   image_url: string | null;
+  image_urls: string[] | null;
 }
 
 interface UIVenue {
@@ -44,6 +45,7 @@ interface UIVenue {
   listing: Record<string, FieldMeta>;
   experience: Record<string, FieldMeta>;
   image_url: string | null;
+  image_urls: string[] | null;
   _raw: DBVenue;
 }
 
@@ -138,7 +140,8 @@ function toUIVenue(v: DBVenue): UIVenue {
       "Verification Score": { value: `${(v.verification_score * 5).toFixed(1)} / 5`, source: "Manual",    verifiedAt: verAt, confidence: scoreConf(v.verification_score) },
       "Data Source":        { value: v.source, source: "System", verifiedAt: v.created_at.split("T")[0], confidence: "high" },
     },
-    image_url: v.image_url ?? null,
+    image_url:  v.image_url  ?? null,
+    image_urls: v.image_urls ?? null,
     _raw: v,
   };
 }
@@ -335,31 +338,51 @@ export default function AdminPanel() {
       if (upErr) throw upErr;
 
       const publicUrl = `https://gsidytvxyhdzrkoijuvs.supabase.co/storage/v1/object/public/venue-images/${filename}`;
+      const isFirst   = !(selectedVenue.image_urls?.length) && !selectedVenue.image_url;
 
       await fetch("/api/admin/venues", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venue_id: selectedVenue.id, field: "image_url", value: publicUrl, reason: "Image uploaded via Admin Panel" }),
+        body: JSON.stringify({ venue_id: selectedVenue.id, field: "image_urls_append", value: publicUrl, reason: "Image uploaded via Admin Panel" }),
       });
 
-      setVenues(vs => vs.map(v => v.id === selectedVenue.id ? { ...v, image_url: publicUrl } : v));
+      setVenues(vs => vs.map(v => v.id === selectedVenue.id ? {
+        ...v,
+        image_url:  isFirst ? publicUrl : v.image_url,
+        image_urls: [...(v.image_urls ?? []), publicUrl],
+      } : v));
       toast.success("Image uploaded");
     } catch (err) {
       toast.error("Upload failed");
     } finally {
       setUploading(false);
+      // reset input so same file can be re-selected
+      e.target.value = "";
     }
   }
 
-  async function handleRemoveImage() {
+  async function handleRemoveImage(url: string, index: number) {
+    if (!selectedVenue) return;
+    const newUrls    = (selectedVenue.image_urls ?? []).filter((_, i) => i !== index);
+    const newPrimary = index === 0 ? (newUrls[0] ?? null) : selectedVenue.image_url;
+    await fetch("/api/admin/venues", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ venue_id: selectedVenue.id, field: "image_urls_remove", value: { url, newUrls, newPrimary }, reason: "Image removed via Admin Panel" }),
+    });
+    setVenues(vs => vs.map(v => v.id === selectedVenue.id ? { ...v, image_url: newPrimary, image_urls: newUrls } : v));
+    toast.success("Image removed");
+  }
+
+  async function handleSetPrimary(url: string) {
     if (!selectedVenue) return;
     await fetch("/api/admin/venues", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ venue_id: selectedVenue.id, field: "image_url", value: null, reason: "Image removed via Admin Panel" }),
+      body: JSON.stringify({ venue_id: selectedVenue.id, field: "image_url", value: url, reason: "Primary image updated" }),
     });
-    setVenues(vs => vs.map(v => v.id === selectedVenue.id ? { ...v, image_url: null } : v));
-    toast.success("Image removed");
+    setVenues(vs => vs.map(v => v.id === selectedVenue.id ? { ...v, image_url: url } : v));
+    toast.success("Primary image updated");
   }
 
   async function handleBatchApprove(criteria: { category: string; hasAddress: boolean }) {
@@ -721,31 +744,54 @@ export default function AdminPanel() {
               {activeSection === "listing" && (
                 <div className="flex flex-col gap-2.5">
 
-                  {/* Image upload */}
+                  {/* Image gallery */}
                   <div className="bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden mb-1">
-                    {selectedVenue.image_url ? (
-                      <div className="relative">
-                        <img src={selectedVenue.image_url} alt={selectedVenue.name} className="w-full h-40 object-cover" />
-                        <button onClick={handleRemoveImage}
-                          className="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white active:scale-95 transition-transform">
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="h-32 bg-[#F7F7F7] flex items-center justify-center border-b border-[#EBEBEB]">
-                        <ImageIcon size={32} className="text-[#D1D1D1]" />
-                      </div>
-                    )}
                     <div className="p-4">
-                      <p className="font-bold text-[#222222] text-sm mb-3">Venue Photo</p>
-                      <label className={cn(
-                        "w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm border-2 border-dashed cursor-pointer transition-all active:scale-[0.98]",
-                        uploading ? "border-[#EBEBEB] text-[#999999]" : "border-[#FF5A5F] text-[#FF5A5F]"
-                      )}>
-                        <Upload size={16} />
-                        {uploading ? "Uploading…" : "Upload Photo"}
-                        <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleImageUpload} />
-                      </label>
+                      <div className="flex justify-between items-center mb-3">
+                        <p className="font-bold text-[#222222] text-sm">
+                          Photos ({selectedVenue.image_urls?.length ?? 0}/5)
+                        </p>
+                        {(selectedVenue.image_urls?.length ?? 0) < 5 && (
+                          <label className={cn(
+                            "flex items-center gap-1.5 font-bold text-sm cursor-pointer transition-colors",
+                            uploading ? "text-[#999999]" : "text-[#FF5A5F]"
+                          )}>
+                            <Upload size={14} />
+                            {uploading ? "Uploading…" : "Add Photo"}
+                            <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleImageUpload} />
+                          </label>
+                        )}
+                      </div>
+
+                      {selectedVenue.image_urls && selectedVenue.image_urls.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {selectedVenue.image_urls.map((url, i) => (
+                            <div key={url} className="relative group aspect-square">
+                              <img src={url} alt="" className="w-full h-full object-cover rounded-xl" />
+                              <button onClick={() => handleRemoveImage(url, i)}
+                                className="absolute top-1 right-1 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity active:scale-95">
+                                <X size={10} />
+                              </button>
+                              {selectedVenue.image_url === url ? (
+                                <div className="absolute bottom-1.5 left-1.5 right-1.5 bg-[#FF5A5F] text-white text-[9px] font-bold py-1 rounded-lg text-center">
+                                  Main
+                                </div>
+                              ) : (
+                                <button onClick={() => handleSetPrimary(url)}
+                                  className="absolute bottom-1.5 left-1.5 right-1.5 bg-black/60 text-white text-[9px] font-bold py-1 rounded-lg hidden group-hover:block text-center active:scale-95 transition-transform">
+                                  Set Main
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <label className="w-full h-32 border-2 border-dashed border-[#EBEBEB] rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#FF5A5F] transition-colors group">
+                          <ImageIcon size={28} className="text-[#D1D1D1] group-hover:text-[#FF5A5F] transition-colors" />
+                          <span className="text-sm font-medium text-[#999999] group-hover:text-[#FF5A5F] transition-colors">Upload first photo</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                        </label>
+                      )}
                     </div>
                   </div>
 
