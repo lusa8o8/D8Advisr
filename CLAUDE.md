@@ -94,6 +94,12 @@ sinking_funds:        id, user_id, name, emoji, goal_amount, current_amount,
 
 fund_transactions:    id, fund_id, user_id, amount, type ('deposit'|'withdrawal'),
                       source ('manual'|'auto'), notes, created_at
+
+events:               id, venue_id (FK→venues), title, description,
+                      vibe_tags TEXT[], price NUMERIC(10,2), currency ('ZMW'),
+                      starts_at TIMESTAMPTZ, ends_at TIMESTAMPTZ,
+                      source ('manual'), is_active, created_at, updated_at
+                      Migration: supabase/migrations/20260417000000_create_events_table.sql
 ```
 
 ### Supabase Project
@@ -182,22 +188,36 @@ Returns: { plan_id, plan, planner_note }
 
 ## API Routes
 ```
-GET/POST /api/user/funds        — sinking funds CRUD (create/deposit/withdraw)
-GET/POST /api/user/budget       — monthly budget goal get/set
-GET/POST /api/user/preferences  — user preference read/write
-GET      /api/user/stats        — user stats (plan count, spend)
-POST     /api/plans/generate    — rule-based plan generation
-POST     /api/plans/generate-ai — Claude AI plan generation
-GET/POST /api/plans/[id]/items  — plan stop management
-POST     /api/plans/[id]/feedback — submit feedback + update experience_logs
-GET/POST /api/venues/[id]       — venue detail fetch
-GET      /api/venues/search     — venue search with filters
+GET/POST /api/user/funds              — sinking funds CRUD (create/deposit/withdraw)
+GET/POST /api/user/budget             — monthly budget goal get/set
+GET/POST /api/user/preferences        — user preference read/write
+GET      /api/user/stats              — user stats (plan count, spend)
+POST     /api/plans/generate          — rule-based plan generation
+POST     /api/plans/generate-ai       — Claude AI plan generation
+GET/POST /api/plans/[id]/items        — plan stop management
+POST     /api/plans/[id]/feedback     — submit feedback + update experience_logs
+GET/POST /api/venues/[id]             — venue detail fetch
+GET      /api/venues/search           — venue search with filters
+GET/POST/PATCH/DELETE /api/admin/venues — admin venue CRUD
+                                         GET ?mode=approved → approved venues list
+                                         GET (default) → raw_venues queue
+                                         POST action=approve → promote raw_venue
+                                         POST action=manual → direct curator add
+                                         PATCH field+venue_id → field update / image ops
+                                         DELETE ?id= → reject raw_venue
+                                         DELETE body{venue_id} → soft-delete venue
+GET/POST/PATCH/DELETE /api/admin/events — admin events CRUD
+                                         GET ?venue_id= → events for one venue
+                                         POST → create event (manual)
+                                         PATCH {event_id, ...fields} → update event
+                                         DELETE {event_id} → hard delete event
 ```
 
 ## localStorage Keys
 ```
 d8_avatar_emoji             — selected emoji avatar (ProfileAvatar component)
 d8_notify_venue_${venue.id} — notify toggle per venue (Screen07VenueDetail)
+d8advisr-install-dismissed  — PWA install banner dismissed flag (InstallPrompt component)
 ```
 
 ## Screen Inventory
@@ -225,14 +245,25 @@ d8_notify_venue_${venue.id} — notify toggle per venue (Screen07VenueDetail)
     Admin/Curator    /curator
 ```
 
+## PWA
+```
+public/manifest.json                     — web app manifest (theme #FF5A5F, standalone, portrait)
+public/sw.js                             — service worker, network-first, /offline.html fallback
+public/offline.html                      — branded offline page
+public/icons/icon-192.png               — generated from icon.svg via scripts/generate-icons.js
+public/icons/icon-512.png               — generated from icon.svg via scripts/generate-icons.js
+src/components/ServiceWorkerRegistration.tsx — registers /sw.js on window load (use client)
+src/components/InstallPrompt.tsx         — beforeinstallprompt banner, localStorage dismissed flag
+```
+To regenerate icons: `node scripts/generate-icons.js` (requires sharp devDep)
+
 ## Known Deferred Items
 - Map venue pins use hardcoded positions (no real lat/lng in DB yet)
 - Latitude 15° venue not appearing in home feed (confidence_score filter)
 - Share to Feed button (post-MVP)
 - WhatsApp retention channel (post-MVP)
-- Partner portal (Slice 11)
-- Admin portal replacing /curator (Slice 12)
-- PWA support (Slice 11)
+- Partner portal (post-MVP)
+- Admin portal replacing /curator (post-MVP)
 
 ## Git Convention
 Commit format: `type: short description`
